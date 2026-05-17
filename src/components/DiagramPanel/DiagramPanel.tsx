@@ -168,6 +168,7 @@ export default function DiagramPanel({ isMobile = false }: DiagramPanelProps) {
       {/* Filled state */}
       {selectedChord && (
         <>
+          {/* Chord name + role — always visible at top */}
           <div
             style={{
               fontFamily: 'var(--font-display)',
@@ -194,6 +195,9 @@ export default function DiagramPanel({ isMobile = false }: DiagramPanelProps) {
             {selectedChord.roman} in {selectedChord.keyName}
           </div>
 
+          {/* Scrollable body — diagram + voicing tabs + description */}
+          <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+
           <div ref={diagramRef} style={{ padding: '0 14px', flexShrink: 0 }} />
 
           {voicings.length > 1 && (
@@ -215,9 +219,10 @@ export default function DiagramPanel({ isMobile = false }: DiagramPanelProps) {
                     title={`Voicing ${i + 1}: ${positionLabel(v)}`}
                     style={{
                       flex: 1,
-                      padding: '4px 2px',
+                      padding: '6px 2px',
+                      minHeight: 32,
                       borderRadius: 4,
-                      fontSize: 8.5,
+                      fontSize: 10,
                       fontFamily: 'var(--font-mono)',
                       fontWeight: active ? 600 : 400,
                       background: active ? 'var(--accent)' : 'transparent',
@@ -255,9 +260,7 @@ export default function DiagramPanel({ isMobile = false }: DiagramPanelProps) {
               fontSize: 12,
               color: 'var(--color-text-secondary)',
               lineHeight: 1.65,
-              flex: 1,
               fontFamily: 'var(--font-body)',
-              overflowY: 'auto',
             }}
           >
             {description || (
@@ -266,6 +269,8 @@ export default function DiagramPanel({ isMobile = false }: DiagramPanelProps) {
               </span>
             )}
           </div>
+
+          </div> {/* end scrollable body */}
         </>
       )}
     </>
