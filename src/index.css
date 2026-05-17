@@ -1,0 +1,235 @@
+@import "tailwindcss";
+
+/* ══════════════════════════════════════════════════════
+   THEME STUDIO — dark mode, preserved but not shown in v1
+══════════════════════════════════════════════════════ */
+.theme-studio {
+  --bg:          #111111;
+  --panel-bg:    #181818;
+  --card-bg:     #212121;
+  --input-bg:    #1c1c1c;
+  --header-bg:   #0e0e0e;
+  --nav-bg:      #0a0a0a;
+
+  --accent:         #f59e0b;
+  --accent-dark:    #d97706;
+  --accent-faint:   rgba(245,158,11,0.08);
+  --accent-border:  rgba(245,158,11,0.22);
+
+  --tonic:  #f59e0b;
+  --sub:    #3b82f6;
+  --dom:    #ef4444;
+  --rel:    #a78bfa;
+
+  --chord-tonic:       #f59e0b;
+  --chord-subdominant: #3b82f6;
+  --chord-dominant:    #ef4444;
+  --chord-relative:    #a78bfa;
+
+  --text:                 #e5e0d8;
+  --text-sub:             #a09890;
+  --text-muted:           #555555;
+  --text-dim:             #303030;
+  --color-text-primary:   #e5e0d8;
+  --color-text-secondary: #a09890;
+  --color-text-tertiary:  #555555;
+
+  --border:                  #272727;
+  --color-border-primary:    #272727;
+  --color-border-secondary:  #333333;
+  --color-border-tertiary:   #2a2a2a;
+
+  --color-bg-primary:   #111111;
+  --color-bg-secondary: #1c1c1c;
+  --color-bg-tertiary:  #222222;
+
+  --pill-bg:     #222222;
+  --pill-border: #303030;
+
+  --btn-primary-bg:   #f59e0b;
+  --btn-primary-text: #000000;
+
+  --radius:           8px;
+  --radius-sm:        5px;
+  --border-radius-md: 8px;
+  --border-radius-lg: 12px;
+
+  --font-heading: 'Bebas Neue', sans-serif;
+  --font-chord:   'JetBrains Mono', monospace;
+  --font-body:    'Source Sans 3', sans-serif;
+  --font-sans:    'Source Sans 3', sans-serif;
+  --font-mono:    'JetBrains Mono', monospace;
+  --font-display: 'Fraunces', serif;
+
+  --nut-color:    #ccc8c0;
+  --string-color: #7a6040;
+  --fret-color:   #2a2a2a;
+  --dot-color:    #f59e0b;
+  --marker-color: #252525;
+
+  --key-major-h:      #f59e0b;
+  --key-major-dk:     #fcd34d;
+  --key-major-bg:     rgba(245,158,11,.09);
+  --key-major-border: rgba(245,158,11,.50);
+
+  --key-minor-h:      #a78bfa;
+  --key-minor-dk:     #c4b5fd;
+  --key-minor-bg:     rgba(167,139,250,.08);
+  --key-minor-border: rgba(167,139,250,.52);
+
+  --key-mixo-h:       #3b82f6;
+  --key-mixo-dk:      #93c5fd;
+  --key-mixo-bg:      rgba(59,130,246,.08);
+  --key-mixo-border:  rgba(59,130,246,.52);
+
+  --card-shadow: 0 2px 10px rgba(0,0,0,0.40);
+}
+
+/* ══════════════════════════════════════════════════════
+   THEME CANVAS — 1980s Memphis palette (light mode)
+══════════════════════════════════════════════════════ */
+.theme-canvas {
+  /* ── Backgrounds ───────────────────────────────── */
+  --bg:          #FDF5DF;
+  --panel-bg:    #FFFEF8;
+  --card-bg:     #FFFEF8;
+  --input-bg:    #F5EDD0;
+  --nav-bg:      #2D2926;
+  --header-bg:   #FFFEF8;
+
+  --color-bg-primary:   #FDF5DF;
+  --color-bg-secondary: #F5EDD0;
+  --color-bg-tertiary:  #EDE4C8;
+
+  /* ── Borders ───────────────────────────────────── */
+  --border:                  #E2D9B8;
+  --color-border-primary:    #E2D9B8;
+  --color-border-secondary:  #CFC6A0;
+  --color-border-tertiary:   #DDD4B0;
+
+  /* ── Text ──────────────────────────────────────── */
+  --text:                 #2D2926;
+  --text-sub:             #6B6050;
+  --text-muted:           #9A8E7A;
+  --text-dim:             #C4B898;
+  --color-text-primary:   #2D2926;
+  --color-text-secondary: #6B6050;
+  --color-text-tertiary:  #9A8E7A;
+
+  /* ── Primary accent — 1980s teal ───────────────── */
+  --accent:        #5EBEC4;
+  --accent-dark:   #2E9499;
+  --accent-faint:  rgba(94,190,196,0.10);
+  --accent-border: rgba(94,190,196,0.30);
+
+  /* ── Harmonic function colours ─────────────────── */
+  --tonic:  #5EBEC4;
+  --sub:    #9B5DE5;
+  --dom:    #F92C85;
+  --rel:    #F5923A;
+
+  --chord-tonic:       #5EBEC4;
+  --chord-subdominant: #9B5DE5;
+  --chord-dominant:    #F92C85;
+  --chord-relative:    #F5923A;
+
+  /* ── Pill components ───────────────────────────── */
+  --pill-bg:     #F0E8CC;
+  --pill-border: #E2D9B8;
+
+  /* ── Buttons ───────────────────────────────────── */
+  --btn-primary-bg:   #5EBEC4;
+  --btn-primary-text: #ffffff;
+
+  /* ── Geometry ──────────────────────────────────── */
+  --radius:           6px;
+  --radius-sm:        4px;
+  --border-radius-md: 6px;
+  --border-radius-lg: 10px;
+
+  /* ── Typography ────────────────────────────────── */
+  --font-heading: 'Fraunces', serif;
+  --font-chord:   'JetBrains Mono', monospace;
+  --font-body:    'Source Sans 3', sans-serif;
+  --font-sans:    'Source Sans 3', sans-serif;
+  --font-mono:    'JetBrains Mono', monospace;
+  --font-display: 'Fraunces', serif;
+
+  /* ── Fretboard rendering ───────────────────────── */
+  --nut-color:    #2D2926;
+  --string-color: #9A8E7A;
+  --fret-color:   #E2D9B8;
+  --dot-color:    #5EBEC4;
+  --marker-color: #EDE4C8;
+
+  /* ── Key path — circle of fifths colours ───────── */
+  /* Row 1 — Major-like: 1980s teal */
+  --key-major-h:      #5EBEC4;
+  --key-major-dk:     #2E9499;
+  --key-major-bg:     rgba(94,190,196,.09);
+  --key-major-border: rgba(94,190,196,.50);
+
+  /* Row 2 — Minor-like: 1980s hot pink */
+  --key-minor-h:      #F92C85;
+  --key-minor-dk:     #C4006A;
+  --key-minor-bg:     rgba(249,44,133,.08);
+  --key-minor-border: rgba(249,44,133,.52);
+
+  /* Row 3 — Mixolydian/modal: 1980s warm orange */
+  --key-mixo-h:       #F5923A;
+  --key-mixo-dk:      #B85E10;
+  --key-mixo-bg:      rgba(245,146,58,.08);
+  --key-mixo-border:  rgba(245,146,58,.52);
+
+  /* ── Shadows ───────────────────────────────────── */
+  --card-shadow: 0 1px 6px rgba(45,41,38,0.06);
+}
+
+/* ══════════════════════════════════════════════════════
+   GLOBAL RESETS & BASE
+══════════════════════════════════════════════════════ */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* ── Animations ─────────────────────────────────── */
+@keyframes slideInChip {
+  from { opacity: 0; transform: translateX(10px) scale(0.95); }
+  to   { opacity: 1; transform: translateX(0)    scale(1); }
+}
+.chip-enter { animation: slideInChip 0.15s ease-out; }
+
+@keyframes fadeInRow {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.row-enter { animation: fadeInRow 0.2s ease-out; }
+
+@keyframes slideDownPanel {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.panel-enter { animation: slideDownPanel 0.18s ease-out; }
+
+/* ── Scrollbar ───────────────────────────────────── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* ── Focus rings ─────────────────────────────────── */
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}

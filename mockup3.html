@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ChordPath — Mockup 3</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@400;600&family=Source+Sans+3:wght@300;400;600&family=Fraunces:opsz,wght@9..144,300;9..144,500;9..144,700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:           #f7f6f2;
+    --surface:      #ffffff;
+    --surface2:     #f0efe9;
+    --border:       #dedad2;
+    --text:         #1a1916;
+    --text-sub:     #5a5750;
+    --text-muted:   #8a8680;
+    --accent:       #0d9488;
+    --accent-faint: #f0fdfb;
+    --accent-border:#99e6de;
+    --tonic:        #0d9488;
+    --sub:          #6366f1;
+    --dom:          #dc2626;
+    --rel:          #d97706;
+    --green:        #16a34a;
+    --amber:        #d97706;
+    --radius:       8px;
+    --radius-sm:    5px;
+    --font-ui:      'Source Sans 3', sans-serif;
+    --font-chord:   'JetBrains Mono', monospace;
+    --font-display: 'Fraunces', serif;
+  }
+
+  body {
+    background: #e8e7e2;
+    font-family: var(--font-ui);
+    color: var(--text);
+    padding: 40px 32px 60px;
+    min-height: 100vh;
+  }
+
+  /* ── Page title ─────────────────────────────────────────────────── */
+  .mockup-title {
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 500;
+    color: #6b6860;
+    text-align: center;
+    margin-bottom: 24px;
+    letter-spacing: 0.3px;
+  }
+  .mockup-title strong { color: var(--accent); font-weight: 700; }
+  .mockup-title .pill {
+    display: inline-block;
+    background: var(--accent);
+    color: white;
+    font-family: var(--font-ui);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-left: 6px;
+    vertical-align: middle;
+    position: relative;
+    top: -1px;
+  }
+
+  /* ── App shell ──────────────────────────────────────────────────── */
+  .app-frame {
+    background: var(--bg);
+    border-radius: 12px;
+    border: 1px solid #c8c6be;
+    box-shadow: 0 4px 32px rgba(0,0,0,0.12);
+    padding: 16px;
+    overflow: hidden;
+  }
+
+  .app-shell {
+    display: grid;
+    grid-template-columns: 150px 1fr 290px;
+    gap: 12px;
+    align-items: start;
+  }
+
+  /* ── Left panel (dimmed) ─────────────────────────────────────────── */
+  .left-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    opacity: 0.4;
+  }
+  .sec-lbl {
+    font-size: 8px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 5px;
+  }
+  .ph { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); }
+
+  /* ── Center panel (dimmed) ─────────────────────────────────────── */
+  .center-panel { display: flex; flex-direction: column; gap: 10px; opacity: 0.38; }
+
+  .fretboard-ph {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    height: 148px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+  }
+
+  .prog-ph {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px;
+    display: flex;
+    gap: 8px;
+  }
+  .chord-card {
+    flex: 1;
+    background: var(--accent-faint);
+    border: 1px solid var(--accent-border);
+    border-radius: var(--radius);
+    height: 96px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+  }
+  .chord-card .cn {
+    font-family: var(--font-chord);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--accent);
+  }
+  .chord-card .rn {
+    font-size: 8px;
+    color: var(--text-muted);
+  }
+  .chord-card.empty {
+    background: var(--surface2);
+    border-style: dashed;
+    border-color: var(--border);
+  }
+  .chord-card.empty .cn { color: var(--text-muted); font-size: 22px; font-weight: 300; }
+
+  /* ════════════════════════════════════════════════════════════════
+     RIGHT PANEL — THE SMART PANEL
+  ════════════════════════════════════════════════════════════════ */
+  .right-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    position: relative;
+  }
+
+  .redesigned-badge {
+    position: absolute;
+    top: -11px;
+    right: 0;
+    background: var(--accent);
+    color: white;
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 10px;
+    z-index: 10;
+  }
+
+  .panel-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  /* Tab bar */
+  .tab-bar {
+    display: flex;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+  }
+  .tab {
+    flex: 1;
+    padding: 8px 4px 7px;
+    font-size: 9.5px;
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    text-align: center;
+    color: var(--text-muted);
+    border-bottom: 2px solid transparent;
+  }
+  .tab.active {
+    color: var(--accent);
+    background: var(--surface);
+    border-bottom: 2px solid var(--accent);
+  }
+  .tab.inactive { color: #b0ada8; }
+
+  /* Panel inner */
+  .panel-inner {
+    padding: 12px 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+  }
+
+  .panel-label {
+    font-size: 8px;
+    letter-spacing: 1.6px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  /* ── Top match card ─────────────────────────────────────────────── */
+  .top-match {
+    background: var(--accent-faint);
+    border: 1px solid var(--accent-border);
+    border-radius: var(--radius);
+    padding: 10px 11px 12px;
+  }
+  .tm-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 3px;
+  }
+  .best-badge {
+    font-size: 7.5px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: rgba(13,148,136,0.14);
+    padding: 2px 6px;
+    border-radius: 3px;
+  }
+  .conf-dots { display: flex; gap: 3px; }
+  .cdot {
+    width: 7px; height: 7px; border-radius: 50%;
+    border: 1.5px solid var(--accent);
+    background: transparent;
+  }
+  .cdot.on { background: var(--accent); }
+
+  .key-big {
+    font-family: var(--font-chord);
+    font-size: 24px;
+    color: var(--accent);
+    line-height: 1.1;
+    margin: 2px 0 1px;
+  }
+  .key-big .mode { font-size: 15px; opacity: 0.85; }
+  .key-char {
+    font-size: 10px;
+    color: var(--text-sub);
+    font-style: italic;
+    margin-bottom: 9px;
+  }
+
+  /* Chord pill row */
+  .cp-row { display: flex; gap: 3px; margin-bottom: 3px; }
+  .cp {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--accent-border);
+    border-radius: 4px;
+    padding: 3px 2px;
+    text-align: center;
+    font-family: var(--font-chord);
+    font-size: 9px;
+    font-weight: 600;
+    line-height: 1.3;
+  }
+  .cp.t { color: var(--tonic);  border-color: rgba(13,148,136,0.3); }
+  .cp.s { color: var(--sub);    border-color: rgba(99,102,241,0.25); }
+  .cp.d { color: var(--dom);    border-color: rgba(220,38,38,0.22); }
+  .cp.r { color: var(--rel);    border-color: rgba(217,119,6,0.25); }
+
+  .rn-row { display: flex; gap: 3px; }
+  .rn-c {
+    flex: 1;
+    text-align: center;
+    font-family: var(--font-chord);
+    font-size: 7.5px;
+    color: var(--text-muted);
+  }
+  .rn-c.t { color: var(--tonic); }
+  .rn-c.s { color: var(--sub); }
+  .rn-c.d { color: var(--dom); }
+
+  .fits-ok {
+    margin-top: 7px;
+    font-size: 9.5px;
+    color: var(--green);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  /* ── Secondary matches ───────────────────────────────────────────── */
+  .sec-matches { display: flex; flex-direction: column; gap: 5px; }
+
+  .sm {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+  }
+
+  .sm-head {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 10px 5px;
+    background: var(--surface);
+  }
+  .sm-rank {
+    font-size: 8px;
+    color: var(--text-muted);
+    font-family: var(--font-chord);
+    min-width: 14px;
+  }
+  .sm-key {
+    font-family: var(--font-chord);
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--text);
+    flex: 0 0 auto;
+  }
+  .sm-char {
+    font-size: 8.5px;
+    color: var(--text-muted);
+    font-style: italic;
+    flex: 1;
+  }
+  .sm-conf { display: flex; gap: 2px; }
+  .smdot {
+    width: 5px; height: 5px; border-radius: 50%;
+    border: 1px solid var(--border); background: transparent;
+  }
+  .smdot.on { background: var(--text-muted); border-color: var(--text-muted); }
+
+  .sm-body {
+    padding: 6px 10px 7px;
+    background: var(--surface2);
+    border-top: 1px solid var(--border);
+  }
+  .sm-cp-row { display: flex; gap: 2px; margin-bottom: 3px; }
+  .smcp {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 2px 1px;
+    text-align: center;
+    font-family: var(--font-chord);
+    font-size: 8px;
+    color: var(--text-sub);
+    line-height: 1.3;
+  }
+  .sm-rn-row { display: flex; gap: 2px; }
+  .smrn {
+    flex: 1;
+    text-align: center;
+    font-family: var(--font-chord);
+    font-size: 7px;
+    color: var(--text-muted);
+  }
+
+  .fits-ok.sm-ok { font-size: 9px; margin-top: 5px; }
+  .fits-warn {
+    margin-top: 5px;
+    font-size: 9px;
+    color: var(--amber);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  /* ── Also fits ───────────────────────────────────────────────────── */
+  .divider { height: 1px; background: var(--border); }
+
+  .also-fits {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .af-lbl {
+    font-size: 8px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  .af-pill {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 2px 7px;
+    font-size: 8.5px;
+    color: var(--text-sub);
+    font-family: var(--font-chord);
+  }
+  .af-more {
+    margin-left: auto;
+    font-size: 9px;
+    color: var(--accent);
+    cursor: pointer;
+  }
+
+  /* ── Legend ─────────────────────────────────────────────────────── */
+  .legend {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding-top: 2px;
+  }
+  .leg-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 8.5px;
+    color: var(--text-muted);
+  }
+  .leg-dot { width: 7px; height: 7px; border-radius: 50%; }
+
+  /* SVG check/warn icons */
+  .ico-ok  { flex-shrink: 0; }
+  .ico-warn{ flex-shrink: 0; }
+
+  /* ════════════════════════════════════════════════════════════════
+     CALLOUT ANNOTATIONS  (below the frame)
+  ════════════════════════════════════════════════════════════════ */
+  .callouts {
+    margin-top: 28px;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+  }
+  .callout {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 7px;
+    padding: 10px 12px;
+  }
+  .callout-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px; height: 18px;
+    background: #3b82f6;
+    color: white;
+    border-radius: 50%;
+    font-size: 9px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .callout-title {
+    font-size: 10.5px;
+    font-weight: 700;
+    color: #1e40af;
+    margin-bottom: 4px;
+  }
+  .callout-body {
+    font-size: 9.5px;
+    color: #3b5bbd;
+    line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+
+<div class="mockup-title">
+  ChordPath &nbsp;·&nbsp; <strong>Mockup 3: The Smart Panel</strong>
+  <span class="pill">Redesigned</span>
+  &nbsp;·&nbsp; Light Mode &nbsp;·&nbsp; Same 285px right column
+</div>
+
+<!-- ── App frame ─────────────────────────────────────── -->
+<div class="app-frame">
+  <div class="app-shell">
+
+    <!-- LEFT (dimmed) -->
+    <div class="left-panel">
+      <div>
+        <div class="sec-lbl">Detect</div>
+        <div class="ph" style="height:170px;"></div>
+      </div>
+      <div>
+        <div class="sec-lbl">Chord Library</div>
+        <div class="ph" style="height:72px;"></div>
+        <div class="ph" style="height:22px;margin-top:5px;"></div>
+        <div class="ph" style="height:22px;margin-top:4px;"></div>
+        <div class="ph" style="height:22px;margin-top:4px;"></div>
+      </div>
+    </div>
+
+    <!-- CENTER (dimmed) -->
+    <div class="center-panel">
+      <div class="fretboard-ph">Fretboard / Detect</div>
+      <div class="prog-ph">
+        <div class="chord-card"><span class="cn">G</span><span class="rn">I — Tonic</span></div>
+        <div class="chord-card"><span class="cn">Em</span><span class="rn">vi — Relative</span></div>
+        <div class="chord-card"><span class="cn">C</span><span class="rn">IV — Sub</span></div>
+        <div class="chord-card"><span class="cn">D</span><span class="rn">V — Dominant</span></div>
+        <div class="chord-card empty"><span class="cn">+</span></div>
+      </div>
+    </div>
+
+    <!-- RIGHT — Smart Panel -->
+    <div class="right-panel">
+      <div class="redesigned-badge">Redesigned</div>
+      <div class="panel-card">
+
+        <!-- Tab bar -->
+        <div class="tab-bar">
+          <div class="tab active">Analysis</div>
+          <div class="tab inactive">Next Chord</div>
+          <div class="tab inactive">Scale</div>
+        </div>
+
+        <div class="panel-inner">
+          <div class="panel-label">Key Analysis &mdash; 3 matches found</div>
+
+          <!-- #1 Top match -->
+          <div class="top-match">
+            <div class="tm-header">
+              <span class="best-badge">#1 Best Match</span>
+              <div class="conf-dots">
+                <div class="cdot on"></div><div class="cdot on"></div>
+                <div class="cdot on"></div><div class="cdot on"></div>
+                <div class="cdot on"></div>
+              </div>
+            </div>
+            <div class="key-big">G <span class="mode">Major</span></div>
+            <div class="key-char">Bright, resolved, happy</div>
+
+            <div class="cp-row">
+              <div class="cp t">G</div>
+              <div class="cp r">Am</div>
+              <div class="cp r">Bm</div>
+              <div class="cp s">C</div>
+              <div class="cp d">D</div>
+              <div class="cp t">Em</div>
+              <div class="cp d">F#°</div>
+            </div>
+            <div class="rn-row">
+              <div class="rn-c t">I</div>
+              <div class="rn-c">ii</div>
+              <div class="rn-c">iii</div>
+              <div class="rn-c s">IV</div>
+              <div class="rn-c d">V</div>
+              <div class="rn-c">vi</div>
+              <div class="rn-c">vii°</div>
+            </div>
+
+            <div class="fits-ok">
+              <svg class="ico-ok" width="11" height="11" viewBox="0 0 11 11">
+                <circle cx="5.5" cy="5.5" r="5.5" fill="#16a34a"/>
+                <path d="M2.8 5.5l2 2 3.2-3.2" stroke="white" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              All 7 chords diatonic &mdash; 7/7
+            </div>
+          </div>
+
+          <!-- Secondary matches -->
+          <div class="sec-matches">
+
+            <!-- #2 -->
+            <div class="sm">
+              <div class="sm-head">
+                <span class="sm-rank">#2</span>
+                <span class="sm-key">E Minor</span>
+                <span class="sm-char">Dark, natural, resolved</span>
+                <div class="sm-conf">
+                  <div class="smdot on"></div><div class="smdot on"></div>
+                  <div class="smdot on"></div><div class="smdot on"></div>
+                  <div class="smdot"></div>
+                </div>
+              </div>
+              <div class="sm-body">
+                <div class="sm-cp-row">
+                  <div class="smcp">Em</div><div class="smcp">F#°</div>
+                  <div class="smcp">G</div><div class="smcp">Am</div>
+                  <div class="smcp">Bm</div><div class="smcp">C</div>
+                  <div class="smcp">D</div>
+                </div>
+                <div class="sm-rn-row">
+                  <div class="smrn">i</div><div class="smrn">ii°</div>
+                  <div class="smrn">III</div><div class="smrn">iv</div>
+                  <div class="smrn">v</div><div class="smrn">VI</div>
+                  <div class="smrn">VII</div>
+                </div>
+                <div class="fits-ok sm-ok">
+                  <svg class="ico-ok" width="10" height="10" viewBox="0 0 10 10">
+                    <circle cx="5" cy="5" r="5" fill="#16a34a"/>
+                    <path d="M2.5 5l2 2 3-3" stroke="white" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                  All 7 chords diatonic &mdash; 7/7
+                </div>
+              </div>
+            </div>
+
+            <!-- #3 -->
+            <div class="sm">
+              <div class="sm-head">
+                <span class="sm-rank">#3</span>
+                <span class="sm-key">D Mixolydian</span>
+                <span class="sm-char">Bluesy, open, rock</span>
+                <div class="sm-conf">
+                  <div class="smdot on"></div><div class="smdot on"></div>
+                  <div class="smdot on"></div><div class="smdot"></div>
+                  <div class="smdot"></div>
+                </div>
+              </div>
+              <div class="sm-body">
+                <div class="sm-cp-row">
+                  <div class="smcp">D</div><div class="smcp">Em</div>
+                  <div class="smcp">F#°</div><div class="smcp">G</div>
+                  <div class="smcp">Am</div><div class="smcp">Bm</div>
+                  <div class="smcp">C</div>
+                </div>
+                <div class="sm-rn-row">
+                  <div class="smrn">I</div><div class="smrn">ii</div>
+                  <div class="smrn">iii</div><div class="smrn">IV</div>
+                  <div class="smrn">v</div><div class="smrn">vi</div>
+                  <div class="smrn">♭VII</div>
+                </div>
+                <div class="fits-warn">
+                  <svg class="ico-warn" width="10" height="10" viewBox="0 0 10 10">
+                    <circle cx="5" cy="5" r="5" fill="#d97706"/>
+                    <path d="M3.5 3.5l3 3M6.5 3.5l-3 3" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+                  </svg>
+                  6/7 &mdash; C# not used (borrowed)
+                </div>
+              </div>
+            </div>
+
+          </div><!-- /sec-matches -->
+
+          <div class="divider"></div>
+
+          <!-- Also fits -->
+          <div class="also-fits">
+            <span class="af-lbl">Also fits</span>
+            <span class="af-pill">A Dorian</span>
+            <span class="af-pill">B Phrygian</span>
+            <span class="af-more">+4 more →</span>
+          </div>
+
+          <!-- Legend -->
+          <div class="legend">
+            <div class="leg-item"><div class="leg-dot" style="background:var(--tonic)"></div>Tonic</div>
+            <div class="leg-item"><div class="leg-dot" style="background:var(--sub)"></div>Sub</div>
+            <div class="leg-item"><div class="leg-dot" style="background:var(--dom)"></div>Dom</div>
+            <div class="leg-item"><div class="leg-dot" style="background:var(--rel)"></div>Rel</div>
+          </div>
+
+        </div><!-- /panel-inner -->
+      </div><!-- /panel-card -->
+    </div><!-- /right-panel -->
+
+  </div><!-- /app-shell -->
+</div><!-- /app-frame -->
+
+<!-- ── Callout annotations ────────────────────────────── -->
+<div class="callouts">
+  <div class="callout">
+    <div class="callout-num">1</div>
+    <div class="callout-title">Tab Bar</div>
+    <div class="callout-body">Analysis, Next Chord, and Scale live in tabs — no more stacked components competing for vertical space. Same 285px position, zero layout change.</div>
+  </div>
+  <div class="callout">
+    <div class="callout-num">2</div>
+    <div class="callout-title">#1 Best Match Card</div>
+    <div class="callout-body">Top result gets a full accent-tinted card: key name, mode character, all 7 diatonic chord pills, Roman numerals, and an explicit 7/7 diatonic confirmation.</div>
+  </div>
+  <div class="callout">
+    <div class="callout-num">3</div>
+    <div class="callout-title">Functional Colour Coding</div>
+    <div class="callout-body">Teal = Tonic, Indigo = Subdominant, Red = Dominant, Amber = Relative. Colour is consistent across all three tabs and mirrors the function-key data layer already in the code.</div>
+  </div>
+  <div class="callout">
+    <div class="callout-num">4</div>
+    <div class="callout-title">Compact Secondary Rows</div>
+    <div class="callout-body">Ranks #2–#N are collapsible rows: header shows rank + key + character + confidence dots. Expanded body shows chord pills, Roman numerals, and a green ✓ or amber ✗ fits line.</div>
+  </div>
+  <div class="callout">
+    <div class="callout-num">5</div>
+    <div class="callout-title">Also Fits + Show All</div>
+    <div class="callout-body">Tied keys shown as small pills. "+4 more →" link opens a full sortable overlay of all 84 key scores — the power-user research view, available on demand.</div>
+  </div>
+</div>
+
+</body>
+</html>
