@@ -222,46 +222,60 @@ export default function KeyRow({ keyScore, progressionChordNames, selectedChord,
           style={{
             borderTop: `0.5px solid ${colours.border}44`,
             background: colours.bg,
-            padding: '8px 12px 10px 24px',
+            padding: '4px 12px 6px 12px',
             display: 'flex',
             flexDirection: 'column',
-            gap: 7,
           }}
         >
           {progressions.map((p, i) => (
-            <div key={i} style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-              <span
-                style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: 11,
-                  color: colours.dk,
-                  fontWeight: 500,
-                  flexShrink: 0,
-                  minWidth: 140,
-                }}
-              >
-                {p.romans}
-              </span>
+            <div
+              key={i}
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 2,
+                padding: isMobile ? '10px 2px' : '7px 2px',
+                borderBottom: i < progressions.length - 1
+                  ? `0.5px solid ${colours.border}33`
+                  : 'none',
+              }}
+            >
+              {/* Row 1: roman numerals + name */}
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                <span
+                  style={{
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: isMobile ? 13 : 11,
+                    color: colours.dk,
+                    fontWeight: 600,
+                    flex: 1,
+                    letterSpacing: '.2px',
+                  }}
+                >
+                  {p.romans}
+                </span>
+                <span
+                  style={{
+                    fontFamily: 'var(--font-body)',
+                    fontSize: isMobile ? 11 : 10,
+                    color: colours.h,
+                    fontWeight: 600,
+                    flexShrink: 0,
+                  }}
+                >
+                  {p.name}
+                </span>
+              </div>
+              {/* Row 2: description */}
               <span
                 style={{
                   fontFamily: 'var(--font-body)',
-                  fontSize: 10,
-                  color: colours.h,
-                  fontWeight: 600,
-                  flexShrink: 0,
-                }}
-              >
-                {p.name}
-              </span>
-              <span
-                style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: 10,
+                  fontSize: isMobile ? 11 : 10,
                   color: 'var(--color-text-tertiary)',
-                  lineHeight: 1.4,
+                  lineHeight: 1.5,
                 }}
               >
-                — {p.context}
+                {p.context}
               </span>
             </div>
           ))}
