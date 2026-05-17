@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback } from 'react'
 import { useAppStore } from '../../store/useAppStore'
 import { parseChord } from '../../theory/keyDetection'
+import { useIsMobile } from '../../hooks/useIsMobile'
 
 // ── Fretboard icon ────────────────────────────────────────────────────────────
 function FretboardIcon() {
@@ -29,6 +30,7 @@ export default function ChordInputStrip() {
   const clearProgression  = useAppStore(s => s.clearProgression)
   const setFretboardOpen  = useAppStore(s => s.setFretboardOpen)
 
+  const isMobile = useIsMobile()
   const [inputValue, setInputValue]   = useState('')
   const [inputError, setInputError]   = useState(false)
   const [showHint, setShowHint]       = useState(() => !sessionStorage.getItem('cp-hint-dismissed'))
@@ -61,14 +63,13 @@ export default function ChordInputStrip() {
   return (
     <div
       style={{
-        minHeight: 64,
         background: 'var(--panel-bg)',
         borderBottom: '2px solid var(--color-border-secondary)',
-        padding: '9px 14px',
+        padding: isMobile ? '8px 12px' : '9px 14px',
         display: 'flex',
         alignItems: 'center',
         flexWrap: 'wrap',
-        gap: 8,
+        gap: isMobile ? 6 : 8,
         flexShrink: 0,
       }}
     >
@@ -320,15 +321,11 @@ export default function ChordInputStrip() {
         })()}
       </div>
 
-      {/* ── Separator ────────────────────────────────────────────────────── */}
-      <div
-        style={{
-          width: '0.5px',
-          height: 30,
-          background: 'var(--color-border-tertiary)',
-          flexShrink: 0,
-        }}
-      />
+      {/* ── Separator / row break on mobile ─────────────────────────────── */}
+      {isMobile
+        ? <div style={{ width: '100%', height: 0 }} />
+        : <div style={{ width: '0.5px', height: 30, background: 'var(--color-border-tertiary)', flexShrink: 0 }} />
+      }
 
       {/* ── Fretboard toggle button ───────────────────────────────────── */}
       <button
@@ -376,7 +373,7 @@ export default function ChordInputStrip() {
           background: 'rgba(94,190,196,.1)',
           border: '1.5px solid rgba(94,190,196,.32)',
           borderRadius: 'var(--radius)',
-          padding: '4px 10px',
+          padding: isMobile ? '3px 8px' : '4px 10px',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'flex-end',
@@ -409,20 +406,22 @@ export default function ChordInputStrip() {
             ? `${keyToUse} ${inferredMode}`
             : '—'}
         </span>
-        {/* Confidence dots */}
-        <div style={{ display: 'flex', gap: 3, marginTop: 1 }}>
-          {[1, 2, 3, 4, 5].map(i => (
-            <div
-              key={i}
-              style={{
-                width: 5,
-                height: 5,
-                borderRadius: '50%',
-                background: i <= confidence ? 'var(--accent)' : 'var(--color-border-secondary)',
-              }}
-            />
-          ))}
-        </div>
+        {/* Confidence dots — hidden on mobile */}
+        {!isMobile && (
+          <div style={{ display: 'flex', gap: 3, marginTop: 1 }}>
+            {[1, 2, 3, 4, 5].map(i => (
+              <div
+                key={i}
+                style={{
+                  width: 5,
+                  height: 5,
+                  borderRadius: '50%',
+                  background: i <= confidence ? 'var(--accent)' : 'var(--color-border-secondary)',
+                }}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )

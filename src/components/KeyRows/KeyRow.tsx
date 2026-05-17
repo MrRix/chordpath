@@ -3,6 +3,7 @@ import type { KeyScore } from '../../theory/keyDetection'
 import type { SelectedChord, KeyContext } from '../../store/useAppStore'
 import { getKeyContext } from '../../theory/descriptions'
 import PaletteCard from './PaletteCard'
+import { useIsMobile } from '../../hooks/useIsMobile'
 
 // ── Colour map keyed by KeyContext ────────────────────────────────────────────
 const COLOURS: Record<KeyContext, { h: string; dk: string; bg: string; border: string }> = {
@@ -105,6 +106,7 @@ interface KeyRowProps {
 }
 
 export default function KeyRow({ keyScore, progressionChordNames, selectedChord, onChordTap, isPrimary = true }: KeyRowProps) {
+  const isMobile    = useIsMobile()
   const ctx         = getKeyContext(keyScore.modeName) as KeyContext
   const colours     = COLOURS[ctx]
   const feel        = FEEL_LABELS[keyScore.modeName] ?? keyScore.modeName
@@ -270,6 +272,7 @@ export default function KeyRow({ keyScore, progressionChordNames, selectedChord,
       <div
         style={{
           display: 'flex',
+          flexWrap: isMobile ? 'wrap' : 'nowrap',
           gap: 5,
           padding: '8px 12px 12px',
         }}

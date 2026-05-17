@@ -1,5 +1,6 @@
 import type { DiatonicChordDef } from '../../theory/keyDetection'
 import type { SelectedChord, KeyContext } from '../../store/useAppStore'
+import { useIsMobile } from '../../hooks/useIsMobile'
 
 // ── Scale degree colouring ────────────────────────────────────────────────────
 // I / iii / V (scale degrees 1, 3, 5) → accent teal — the primary structural
@@ -27,6 +28,7 @@ export default function PaletteCard({
   keyName,
   onTap,
 }: PaletteCardProps) {
+  const isMobile = useIsMobile()
   let bg        = 'var(--card-bg)'
   let border    = '0.5px solid var(--color-border-tertiary)'
   let nameColor = 'var(--color-text-primary)'
@@ -55,8 +57,9 @@ export default function PaletteCard({
       tabIndex={0}
       onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') handleClick() }}
       style={{
-        flex: 1,
-        padding: '8px 4px',
+        flex: isMobile ? '1 1 calc(25% - 5px)' : 1,
+        padding: isMobile ? '12px 4px' : '8px 4px',
+        minHeight: isMobile ? 44 : 'auto',
         borderRadius: 'var(--radius)',
         border,
         background: bg,
@@ -64,6 +67,10 @@ export default function PaletteCard({
         cursor: 'pointer',
         minWidth: 0,
         transition: 'all .12s',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
       }}
       onMouseEnter={e => {
         if (!isSelected && !inProgression)
@@ -77,7 +84,7 @@ export default function PaletteCard({
       <div
         style={{
           fontFamily: 'var(--font-mono)',
-          fontSize: 13,
+          fontSize: isMobile ? 14 : 13,
           fontWeight: 500,
           color: nameColor,
           lineHeight: 1.1,
@@ -91,7 +98,7 @@ export default function PaletteCard({
       <div
         style={{
           fontFamily: 'var(--font-mono)',
-          fontSize: 9,
+          fontSize: isMobile ? 10 : 9,
           marginTop: 2,
           color: romanColor,
           lineHeight: 1,

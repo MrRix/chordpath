@@ -25,8 +25,6 @@ function EmptyFretGrid() {
   )
 }
 
-// ── Position label shown on voicing tabs ──────────────────────────────────────
-// "Open" only when the chord genuinely uses open strings; otherwise "Nfr"
 import type { ChordPosition } from '../../theory/chordsDb'
 
 function positionLabel(v: ChordPosition): string {
@@ -36,7 +34,9 @@ function positionLabel(v: ChordPosition): string {
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
-export default function DiagramPanel() {
+interface DiagramPanelProps { isMobile?: boolean }
+
+export default function DiagramPanel({ isMobile = false }: DiagramPanelProps) {
   const selectedChord = useAppStore(s => s.selectedChord)
   const clearSelected = useAppStore(s => s.clearSelectedChord)
   const diagramRef    = useRef<HTMLDivElement>(null)
@@ -45,30 +45,23 @@ export default function DiagramPanel() {
   const voicings = selectedChord ? getChordVoicings(selectedChord.name) : []
   const voicing  = voicings[voicingIdx] ?? voicings[0] ?? null
 
-  // Reset voicing index whenever the selected chord changes
-  useEffect(() => {
-    setVoicingIdx(0)
-  }, [selectedChord?.name])
+  useEffect(() => { setVoicingIdx(0) }, [selectedChord?.name])
 
-  // Render SVGuitarChord into the diagram ref whenever the voicing changes
   useEffect(() => {
     if (!diagramRef.current) return
     diagramRef.current.innerHTML = ''
     if (!voicing) return
-
     const cs = getComputedStyle(document.documentElement)
-    // CSS vars live on .theme-canvas (body), fall back to hardcoded palette
     const dotColor    = '#5EBEC4'
     const fretColor   = cs.getPropertyValue('--fret-color').trim()   || '#E2D9B8'
     const stringColor = cs.getPropertyValue('--string-color').trim() || '#9A8E7A'
     const textColor   = cs.getPropertyValue('--text').trim()         || '#2D2926'
-
     try {
       new SVGuitarChord(diagramRef.current)
         .configure({
           fingerColor:     dotColor,
-          fretColor:       fretColor,
-          stringColor:     stringColor,
+          fretColor,
+          stringColor,
           backgroundColor: 'transparent',
           color:           textColor,
           fontFamily:      "'JetBrains Mono', monospace",
@@ -76,17 +69,13 @@ export default function DiagramPanel() {
           position:        voicing.baseFret,
         })
         .chord({
-          // chords-db stores [E,A,D,G,B,e] (low→high); SVGuitarChord string 1
-          // is the rightmost (high e), so reverse before mapping.
           fingers: [...voicing.frets].reverse().map(
             (f, i) => [i + 1, f === -1 ? 'x' : f] as [number, number | 'x']
           ),
           barres: voicing.barres.map(b => ({ fret: b, fromString: 1, toString: 6 })),
         })
         .draw()
-    } catch {
-      // silently ignore if chord isn't in the DB
-    }
+    } catch { /* ignore */ }
   }, [voicing])
 
   const description = selectedChord
@@ -97,27 +86,11 @@ export default function DiagramPanel() {
     ? (ROLE_COLOURS[selectedChord.keyContext] ?? 'var(--accent)')
     : 'var(--accent)'
 
-  // ── Container ─────────────────────────────────────────────────────────────
-  return (
-    <div
-      style={{
-        width: 224,
-        flexShrink: 0,
-        background: 'var(--panel-bg)',
-        borderLeft: '0.5px solid var(--color-border-secondary)',
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
-      }}
-    >
+  // ── Shared inner content ────────────────────────────────────────────────────
+  const content = (
+    <>
       {/* Panel header */}
-      <div
-        style={{
-          padding: '12px 14px 0',
-          display: 'flex',
-          alignItems: 'center',
-        }}
-      >
+      <div style={{ padding: '12px 14px 0', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
         <span
           style={{
             fontSize: 9,
@@ -136,10 +109,10 @@ export default function DiagramPanel() {
             onClick={clearSelected}
             title="Close"
             style={{
-              width: 20,
-              height: 20,
+              width: 24,
+              height: 24,
               borderRadius: '50%',
-              fontSize: 12,
+              fontSize: 14,
               color: 'var(--color-text-tertiary)',
               background: 'none',
               border: 'none',
@@ -164,7 +137,7 @@ export default function DiagramPanel() {
         )}
       </div>
 
-      {/* ── Empty state ─────────────────────────────────────────────────── */}
+      {/* Empty state */}
       {!selectedChord && (
         <div
           style={{
@@ -192,10 +165,9 @@ export default function DiagramPanel() {
         </div>
       )}
 
-      {/* ── Filled state ─────────────────────────────────────────────────── */}
+      {/* Filled state */}
       {selectedChord && (
         <>
-          {/* Chord name */}
           <div
             style={{
               fontFamily: 'var(--font-display)',
@@ -204,30 +176,26 @@ export default function DiagramPanel() {
               color: 'var(--color-text-primary)',
               padding: '4px 14px 2px',
               lineHeight: 1,
+              flexShrink: 0,
             }}
           >
             {selectedChord.name}
           </div>
 
-          {/* Role line */}
           <div
             style={{
               fontFamily: 'var(--font-mono)',
               fontSize: 11,
               padding: '0 14px 10px',
               color: roleColour,
+              flexShrink: 0,
             }}
           >
             {selectedChord.roman} in {selectedChord.keyName}
           </div>
 
-          {/* Fingering diagram */}
-          <div
-            ref={diagramRef}
-            style={{ padding: '0 14px' }}
-          />
+          <div ref={diagramRef} style={{ padding: '0 14px', flexShrink: 0 }} />
 
-          {/* ── Voicing selector tabs ─────────────────────────────────────── */}
           {voicings.length > 1 && (
             <div
               style={{
@@ -235,6 +203,7 @@ export default function DiagramPanel() {
                 gap: 4,
                 padding: '6px 14px 2px',
                 justifyContent: 'center',
+                flexShrink: 0,
               }}
             >
               {voicings.map((v, i) => {
@@ -246,16 +215,14 @@ export default function DiagramPanel() {
                     title={`Voicing ${i + 1}: ${positionLabel(v)}`}
                     style={{
                       flex: 1,
-                      padding: '3px 2px',
+                      padding: '4px 2px',
                       borderRadius: 4,
                       fontSize: 8.5,
                       fontFamily: 'var(--font-mono)',
                       fontWeight: active ? 600 : 400,
                       background: active ? 'var(--accent)' : 'transparent',
                       color: active ? '#fff' : 'var(--color-text-tertiary)',
-                      border: active
-                        ? 'none'
-                        : '0.5px solid var(--color-border-tertiary)',
+                      border: active ? 'none' : '0.5px solid var(--color-border-tertiary)',
                       cursor: 'pointer',
                       transition: 'all .1s',
                       lineHeight: 1.6,
@@ -280,24 +247,17 @@ export default function DiagramPanel() {
             </div>
           )}
 
-          {/* Divider */}
-          <div
-            style={{
-              height: '0.5px',
-              background: 'var(--color-border-tertiary)',
-              margin: '10px 14px',
-            }}
-          />
+          <div style={{ height: '0.5px', background: 'var(--color-border-tertiary)', margin: '10px 14px', flexShrink: 0 }} />
 
-          {/* Theory description */}
           <div
             style={{
-              padding: '0 14px',
+              padding: '0 14px 14px',
               fontSize: 12,
               color: 'var(--color-text-secondary)',
               lineHeight: 1.65,
               flex: 1,
               fontFamily: 'var(--font-body)',
+              overflowY: 'auto',
             }}
           >
             {description || (
@@ -308,6 +268,69 @@ export default function DiagramPanel() {
           </div>
         </>
       )}
+    </>
+  )
+
+  // ── Mobile: bottom sheet ────────────────────────────────────────────────────
+  if (isMobile) {
+    return (
+      <>
+        {/* Tap-outside backdrop */}
+        <div
+          onClick={selectedChord ? clearSelected : undefined}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,.32)',
+            zIndex: 20,
+            opacity: selectedChord ? 1 : 0,
+            pointerEvents: selectedChord ? 'auto' : 'none',
+            transition: 'opacity .28s',
+          }}
+        />
+        {/* Sheet */}
+        <div
+          style={{
+            position: 'fixed',
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 21,
+            background: 'var(--panel-bg)',
+            borderTop: '0.5px solid var(--color-border-secondary)',
+            borderRadius: '14px 14px 0 0',
+            boxShadow: '0 -8px 32px rgba(0,0,0,.22)',
+            display: 'flex',
+            flexDirection: 'column',
+            maxHeight: '72dvh',
+            transform: selectedChord ? 'translateY(0)' : 'translateY(100%)',
+            transition: 'transform .28s cubic-bezier(.32,.72,0,1)',
+          }}
+        >
+          {/* Drag handle */}
+          <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 10, paddingBottom: 2, flexShrink: 0 }}>
+            <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--color-border-secondary)' }} />
+          </div>
+          {content}
+        </div>
+      </>
+    )
+  }
+
+  // ── Desktop: side column ────────────────────────────────────────────────────
+  return (
+    <div
+      style={{
+        width: 224,
+        flexShrink: 0,
+        background: 'var(--panel-bg)',
+        borderLeft: '0.5px solid var(--color-border-secondary)',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+      }}
+    >
+      {content}
     </div>
   )
 }

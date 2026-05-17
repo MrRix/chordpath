@@ -5,9 +5,12 @@ import ChordInputStrip from './components/ChordInputStrip/ChordInputStrip'
 import KeyRows from './components/KeyRows/KeyRows'
 import DiagramPanel from './components/DiagramPanel/DiagramPanel'
 import FretboardPanel from './components/FretboardPanel/FretboardPanel'
+import { useIsMobile } from './hooks/useIsMobile'
 
 function App() {
-  // Always use canvas theme — dark mode infrastructure is preserved but not shown
+  const isMobile = useIsMobile()
+
+  // Always use canvas theme
   useEffect(() => {
     document.body.className = 'theme-canvas'
   }, [])
@@ -16,7 +19,7 @@ function App() {
     <div
       className="theme-canvas"
       style={{
-        height: '100vh',
+        height: '100dvh',
         display: 'flex',
         flexDirection: 'column',
         background: 'var(--bg)',
@@ -24,13 +27,10 @@ function App() {
         overflow: 'hidden',
       }}
     >
-      {/* 38px nav bar */}
       <Nav />
-
-      {/* 64px+ input bar */}
       <ChordInputStrip />
 
-      {/* Canvas: key rows + diagram panel, with fretboard overlay */}
+      {/* Canvas */}
       <div
         style={{
           flex: 1,
@@ -39,16 +39,16 @@ function App() {
           position: 'relative',
         }}
       >
-        {/* Left: key rows */}
+        {/* Key rows — full width on mobile */}
         <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
           <KeyRows />
         </div>
 
-        {/* Right: 224px diagram panel */}
-        <DiagramPanel />
+        {/* Diagram panel — side column on desktop, bottom sheet on mobile */}
+        <DiagramPanel isMobile={isMobile} />
 
-        {/* Absolute overlay: fretboard detect panel */}
-        <FretboardPanel />
+        {/* Fretboard overlay */}
+        <FretboardPanel isMobile={isMobile} />
       </div>
     </div>
   )

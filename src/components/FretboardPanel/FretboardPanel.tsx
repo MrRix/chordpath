@@ -9,7 +9,9 @@ function normalizeChordName(name: string): string {
   return /^[A-G][#b]?M$/.test(name) ? name.slice(0, -1) : name
 }
 
-export default function FretboardPanel() {
+interface FretboardPanelProps { isMobile?: boolean }
+
+export default function FretboardPanel({ isMobile = false }: FretboardPanelProps) {
   const fretboardOpen         = useAppStore(s => s.fretboardPanelOpen)
   const setFretboardOpen      = useAppStore(s => s.setFretboardOpen)
   const globalFretPositions   = useAppStore(s => s.globalFretPositions)
@@ -75,31 +77,49 @@ export default function FretboardPanel() {
 
   if (!fretboardOpen) return null
 
+  // Mobile: slide-up full-width sheet. Desktop: centred modal.
+  const panelStyle = isMobile
+    ? {
+        position: 'fixed' as const,
+        left: 0, right: 0, bottom: 0,
+        background: 'var(--panel-bg)',
+        borderTop: '0.5px solid var(--color-border-secondary)',
+        borderRadius: '14px 14px 0 0',
+        padding: '14px 14px 28px',
+        boxShadow: '0 -8px 32px rgba(0,0,0,.28)',
+        zIndex: 30,
+      }
+    : {
+        width: 300,
+        background: 'var(--panel-bg)',
+        border: '0.5px solid var(--color-border-secondary)',
+        borderRadius: 'var(--border-radius-lg)',
+        padding: '14px 14px 12px',
+        boxShadow: '0 12px 40px rgba(0,0,0,.28)',
+      }
+
   return (
     /* Overlay backdrop */
     <div
       onClick={e => { if (e.target === e.currentTarget) setFretboardOpen(false) }}
       style={{
-        position: 'absolute',
+        position: 'fixed',
         inset: 0,
         background: 'rgba(0,0,0,.32)',
         display: 'flex',
-        alignItems: 'center',
+        alignItems: isMobile ? 'flex-end' : 'center',
         justifyContent: 'center',
-        zIndex: 10,
+        zIndex: 29,
       }}
     >
       {/* Panel */}
-      <div
-        style={{
-          width: 300,
-          background: 'var(--panel-bg)',
-          border: '0.5px solid var(--color-border-secondary)',
-          borderRadius: 'var(--border-radius-lg)',
-          padding: '14px 14px 12px',
-          boxShadow: '0 12px 40px rgba(0,0,0,.28)',
-        }}
-      >
+      <div style={panelStyle}>
+        {/* Drag handle on mobile */}
+        {isMobile && (
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 10 }}>
+            <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--color-border-secondary)' }} />
+          </div>
+        )}
         {/* ── Header ──────────────────────────────────────────────────── */}
         <div style={{ display: 'flex', alignItems: 'center', marginBottom: 4 }}>
           <span
