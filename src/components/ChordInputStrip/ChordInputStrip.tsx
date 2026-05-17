@@ -26,24 +26,31 @@ export default function ChordInputStrip() {
   const fretboardOpen     = useAppStore(s => s.fretboardPanelOpen)
   const addChord          = useAppStore(s => s.addChordToProgression)
   const removeChord       = useAppStore(s => s.removeChordFromProgression)
+  const clearProgression  = useAppStore(s => s.clearProgression)
   const setFretboardOpen  = useAppStore(s => s.setFretboardOpen)
 
   const [inputValue, setInputValue]   = useState('')
   const [inputError, setInputError]   = useState(false)
+  const [showHint, setShowHint]       = useState(() => !sessionStorage.getItem('cp-hint-dismissed'))
   const inputRef = useRef<HTMLInputElement>(null)
+
+  const dismissHint = () => {
+    setShowHint(false)
+    sessionStorage.setItem('cp-hint-dismissed', '1')
+  }
 
   const handleAdd = useCallback(() => {
     const raw = inputValue.trim()
     if (!raw) return
     const parsed = parseChord(raw)
     if (!parsed) {
-      // Flash error state
       setInputError(true)
       setTimeout(() => setInputError(false), 600)
       return
     }
     addChord(parsed.name, parsed.unrecognized, parsed.hint)
     setInputValue('')
+    dismissHint()
     inputRef.current?.focus()
   }, [inputValue, addChord])
 
@@ -86,7 +93,7 @@ export default function ChordInputStrip() {
                 background: 'var(--color-bg-secondary)',
                 border: '1px solid var(--color-border-secondary)',
                 borderRadius: 'var(--radius)',
-                padding: '5px 22px 5px 9px',
+                padding: '6px 28px 6px 12px',
                 display: 'flex',
                 alignItems: 'center',
                 position: 'relative',
@@ -96,7 +103,7 @@ export default function ChordInputStrip() {
               <span
                 style={{
                   fontFamily: 'var(--font-mono)',
-                  fontSize: 14,
+                  fontSize: 16,
                   fontWeight: 500,
                   color: 'var(--color-text-primary)',
                   lineHeight: 1,
@@ -110,12 +117,13 @@ export default function ChordInputStrip() {
                 title="Remove chord"
                 style={{
                   position: 'absolute',
-                  top: 3,
-                  right: 3,
-                  width: 13,
-                  height: 13,
+                  top: '50%',
+                  right: 5,
+                  transform: 'translateY(-50%)',
+                  width: 17,
+                  height: 17,
                   borderRadius: '50%',
-                  fontSize: 9,
+                  fontSize: 13,
                   lineHeight: 1,
                   color: 'var(--color-text-tertiary)',
                   background: 'none',
@@ -176,28 +184,99 @@ export default function ChordInputStrip() {
           }}
         />
 
-        {/* ── Add button ──────────────────────────────────────────────── */}
-        <button
-          onClick={handleAdd}
-          style={{
-            height: 34,
-            padding: '0 11px',
-            background: 'var(--accent)',
-            color: '#ffffff',
-            fontSize: 11,
-            fontWeight: 500,
-            border: 'none',
-            borderRadius: 'var(--radius)',
-            cursor: 'pointer',
-            fontFamily: 'var(--font-body)',
-            flexShrink: 0,
-            transition: 'background .12s',
-          }}
-          onMouseEnter={e => { e.currentTarget.style.background = 'var(--accent-dark)' }}
-          onMouseLeave={e => { e.currentTarget.style.background = 'var(--accent)' }}
-        >
-          Add
-        </button>
+        {/* ── Add button + first-time hint bubble ─────────────────────── */}
+        <div style={{ position: 'relative', flexShrink: 0 }}>
+          {showHint && (
+            <div
+              style={{
+                position: 'absolute',
+                bottom: 'calc(100% + 10px)',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                background: 'var(--accent)',
+                color: '#fff',
+                fontSize: 11,
+                fontFamily: 'var(--font-body)',
+                fontWeight: 500,
+                lineHeight: 1.4,
+                padding: '7px 11px',
+                borderRadius: 6,
+                whiteSpace: 'nowrap',
+                pointerEvents: 'none',
+                zIndex: 10,
+              }}
+            >
+              Type a chord and click here to start
+              {/* Arrow pointing down */}
+              <span
+                style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  width: 0,
+                  height: 0,
+                  borderLeft: '6px solid transparent',
+                  borderRight: '6px solid transparent',
+                  borderTop: '6px solid var(--accent)',
+                }}
+              />
+            </div>
+          )}
+          <button
+            onClick={handleAdd}
+            style={{
+              height: 34,
+              padding: '0 11px',
+              background: 'var(--accent)',
+              color: '#ffffff',
+              fontSize: 11,
+              fontWeight: 500,
+              border: 'none',
+              borderRadius: 'var(--radius)',
+              cursor: 'pointer',
+              fontFamily: 'var(--font-body)',
+              transition: 'background .12s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'var(--accent-dark)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'var(--accent)' }}
+          >
+            Add
+          </button>
+        </div>
+
+        {/* ── Clear button ─────────────────────────────────────────────── */}
+        {progression.some(s => s.chordName) && (
+          <button
+            onClick={() => { clearProgression(); dismissHint() }}
+            style={{
+              height: 34,
+              padding: '0 11px',
+              background: 'none',
+              color: 'var(--color-text-tertiary)',
+              fontSize: 11,
+              fontWeight: 500,
+              border: '0.5px solid var(--color-border-secondary)',
+              borderRadius: 'var(--radius)',
+              cursor: 'pointer',
+              fontFamily: 'var(--font-body)',
+              flexShrink: 0,
+              transition: 'all .12s',
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.color = '#dc2626'
+              e.currentTarget.style.borderColor = 'rgba(220,38,38,.4)'
+              e.currentTarget.style.background = 'rgba(220,38,38,.06)'
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.color = 'var(--color-text-tertiary)'
+              e.currentTarget.style.borderColor = 'var(--color-border-secondary)'
+              e.currentTarget.style.background = 'none'
+            }}
+          >
+            Clear
+          </button>
+        )}
 
         {/* ── Unrecognized chord warning ───────────────────────────────── */}
         {(() => {

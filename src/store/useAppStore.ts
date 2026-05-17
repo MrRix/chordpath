@@ -249,30 +249,23 @@ function makeSlot(chordName: string | null = null, unrecognized = false, hint = 
   }
 }
 
+// ── Default example progression (loads on every fresh session) ────────────────
+const _defaultSlots = ['Am', 'F', 'C', 'G'].map(n => makeSlot(n))
+const _defaultDerived = computeDerived(_defaultSlots, true, null)
+
 export const useAppStore = create<AppState>()(
   persist(
     (set) => ({
       theme: "canvas",
       globalFretPositions: [],
       globalDetectedChord: null,
-      progression: [],
       autoDetectKey: true,
       manualKey: null,
-      inferredKey: "C",
-      inferredMode: "Major",
-      keyToUse: "C",
-      scaleNotes: scaleNamesForKey(0, 0),  // C Major
-      suggestions: [],
-      diatonicChords: [],
-      patternMatch: null,
-      confidence: 0,
-      borrowedChords: [],
-      tiedKeys: [],
+      ..._defaultDerived,
       expandedSuggestion: null,
       voicingPanelIndex: 0,
       savedProgressions: [],
       isLooping: false,
-      topKeys: [],
       selectedChord: null,
       fretboardPanelOpen: false,
 

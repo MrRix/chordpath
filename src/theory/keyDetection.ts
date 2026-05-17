@@ -102,6 +102,12 @@ function suffixHint(root: string, suf: string): string {
   return `interpreted as ${root} major`
 }
 
+// Canonical suffix for each quality — ensures consistent display regardless of input casing
+const Q_SUFFIX: Record<string, string> = {
+  maj: '', min: 'm', maj7: 'maj7', m7: 'm7', m7b5: 'm7b5',
+  dim7: 'dim7', dim: 'dim', aug: 'aug', '7': '7', sus2: 'sus2', sus4: 'sus4',
+}
+
 export function parseChord(raw: string): ParsedChord | null {
   const s = raw.trim()
   const m = s.match(/^([A-G][#b]?)([^/]*)(?:\/([A-G][#b]?))?$/)
@@ -133,7 +139,11 @@ export function parseChord(raw: string): ParsedChord | null {
     if (bi !== -1 && !pcs.includes(bi)) { pcs = [...pcs, bi]; bassAdded = true }
   }
 
-  return { name: s, root, suf, ri, q, pcs, bass: bassStr ?? null, bassAdded, unrecognized, hint }
+  // Build canonical name (e.g. "AM" → "Am", "CMIN" → "Cm", "Cmaj7" stays "Cmaj7")
+  const canonicalSuf = unrecognized ? suf : (Q_SUFFIX[q] ?? suf)
+  const canonicalName = root + canonicalSuf + (bassStr ? '/' + bassStr : '')
+
+  return { name: canonicalName, root, suf, ri, q, pcs, bass: bassStr ?? null, bassAdded, unrecognized, hint }
 }
 
 // ─── Diatonic chord list ──────────────────────────────────────────────────────
