@@ -110,10 +110,10 @@ export default function DiagramPanel({ isMobile = false }: DiagramPanelProps) {
             onClick={clearSelected}
             title="Close"
             style={{
-              width: 24,
-              height: 24,
+              width: isMobile ? 36 : 24,
+              height: isMobile ? 36 : 24,
               borderRadius: '50%',
-              fontSize: 14,
+              fontSize: isMobile ? 20 : 14,
               color: 'var(--color-text-tertiary)',
               background: 'none',
               border: 'none',
