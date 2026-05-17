@@ -51,7 +51,8 @@ export default function DiagramPanel({ isMobile = false }: DiagramPanelProps) {
     if (!diagramRef.current) return
     diagramRef.current.innerHTML = ''
     if (!voicing) return
-    const cs = getComputedStyle(document.documentElement)
+    // CSS vars live on body.theme-canvas — must read from body, not documentElement
+    const cs = getComputedStyle(document.body)
     const dotColor    = '#5EBEC4'
     const fretColor   = cs.getPropertyValue('--fret-color').trim()   || '#E2D9B8'
     const stringColor = cs.getPropertyValue('--string-color').trim() || '#9A8E7A'
