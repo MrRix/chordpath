@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useAppStore } from '../../store/useAppStore'
 import type { SelectedChord } from '../../store/useAppStore'
 import KeyRow from './KeyRow'
@@ -9,8 +10,14 @@ export default function KeyRows() {
   const setSelectedChord   = useAppStore(s => s.setSelectedChord)
   const clearSelectedChord = useAppStore(s => s.clearSelectedChord)
 
+  const [expanded, setExpanded] = useState(false)
+
   const chordNames = progression.map(s => s.chordName).filter(Boolean) as string[]
   const hasChords  = chordNames.length > 0
+
+  const primaryKeys = topKeys.slice(0, 3)
+  const moreKeys    = topKeys.slice(3)
+  const topScore    = topKeys[0]?.score ?? 0
 
   const handleChordTap = (chord: SelectedChord) => {
     // Toggle: tapping the same chord in the same key deselects
@@ -62,24 +69,64 @@ export default function KeyRows() {
         flexDirection: 'column',
       }}
     >
-      {topKeys.map(ks => (
+      {/* ── Primary key rows (always visible) ──────────────────────── */}
+      {primaryKeys.map(ks => (
         <KeyRow
           key={ks.key}
           keyScore={ks}
           progressionChordNames={chordNames}
           selectedChord={selectedChord}
           onChordTap={handleChordTap}
+          isPrimary
         />
       ))}
 
-      {/* Show more link */}
-      {topKeys.length > 0 && (
-        <div
-          style={{
-            padding: '8px 14px 14px',
-          }}
-        >
+      {/* ── Expanded partial-match rows ──────────────────────────────── */}
+      {expanded && moreKeys.length > 0 && (
+        <>
+          {/* Section divider */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              padding: '8px 14px 4px',
+            }}
+          >
+            <div style={{ flex: 1, height: '0.5px', background: 'var(--color-border-tertiary)' }} />
+            <span
+              style={{
+                fontSize: 9,
+                textTransform: 'uppercase',
+                letterSpacing: '.7px',
+                color: 'var(--color-text-tertiary)',
+                fontFamily: 'var(--font-body)',
+                flexShrink: 0,
+              }}
+            >
+              Partial matches
+            </span>
+            <div style={{ flex: 1, height: '0.5px', background: 'var(--color-border-tertiary)' }} />
+          </div>
+
+          {moreKeys.map(ks => (
+            <KeyRow
+              key={ks.key}
+              keyScore={ks}
+              progressionChordNames={chordNames}
+              selectedChord={selectedChord}
+              onChordTap={handleChordTap}
+              isPrimary={ks.score === topScore}
+            />
+          ))}
+        </>
+      )}
+
+      {/* ── Show more / less toggle ──────────────────────────────────── */}
+      {moreKeys.length > 0 && (
+        <div style={{ padding: '8px 14px 14px' }}>
           <button
+            onClick={() => setExpanded(e => !e)}
             style={{
               fontSize: 11,
               color: 'var(--color-text-tertiary)',
@@ -93,7 +140,9 @@ export default function KeyRows() {
             onMouseEnter={e => { e.currentTarget.style.color = 'var(--accent)' }}
             onMouseLeave={e => { e.currentTarget.style.color = 'var(--color-text-tertiary)' }}
           >
-            Show more matched keys →
+            {expanded
+              ? 'Show less ↑'
+              : `Show ${moreKeys.length} more matched key${moreKeys.length !== 1 ? 's' : ''} →`}
           </button>
         </div>
       )}

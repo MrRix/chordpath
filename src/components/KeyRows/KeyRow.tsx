@@ -43,20 +43,24 @@ interface KeyRowProps {
   progressionChordNames: string[]
   selectedChord: SelectedChord | null
   onChordTap:    (chord: SelectedChord) => void
+  isPrimary?:    boolean   // false = partial match row, show score badge
 }
 
-export default function KeyRow({ keyScore, progressionChordNames, selectedChord, onChordTap }: KeyRowProps) {
+export default function KeyRow({ keyScore, progressionChordNames, selectedChord, onChordTap, isPrimary = true }: KeyRowProps) {
   const ctx     = getKeyContext(keyScore.modeName) as KeyContext
   const colours = COLOURS[ctx]
   const feel    = FEEL_LABELS[keyScore.modeName] ?? keyScore.modeName
   const keyName = `${keyScore.rootName} ${keyScore.modeName}`
 
+  const isPartial = keyScore.tot > 0 && keyScore.score < keyScore.tot
+
   return (
     <div
       style={{
         borderBottom: '0.5px solid var(--color-border-tertiary)',
-        borderLeft: `4px solid ${colours.border}`,
+        borderLeft: `4px solid ${isPrimary ? colours.border : colours.border + '88'}`,
         flexShrink: 0,
+        opacity: isPrimary ? 1 : 0.82,
       }}
     >
       {/* Row header */}
@@ -86,6 +90,24 @@ export default function KeyRow({ keyScore, progressionChordNames, selectedChord,
         >
           {feel}
         </span>
+
+        {/* Partial-match badge */}
+        {isPartial && (
+          <span
+            style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: 9,
+              color: colours.h,
+              background: colours.bg,
+              border: `0.5px solid ${colours.border}`,
+              borderRadius: 3,
+              padding: '2px 5px',
+              flexShrink: 0,
+            }}
+          >
+            {keyScore.score}/{keyScore.tot}
+          </span>
+        )}
 
         {/* Key name */}
         <span

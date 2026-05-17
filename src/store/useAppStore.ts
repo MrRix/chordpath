@@ -193,10 +193,10 @@ function computeDerived(
     }
   })
 
-  // ── Top 3 keys for KeyRows palette ────────────────────────────────────────
-  // Apply the same tiebreaker as detectKey so the primary detected key appears
-  // first, rather than the raw root-index sort (which surfaces lower-root
-  // enharmonic modes ahead of the actual home key).
+  // ── Top keys for KeyRows palette (up to 8, including partial matches) ────
+  // Primary sort: score descending. Within each score tier, apply the same
+  // tiebreaker as detectKey so the home key always appears first.
+  // Keys with score=0 are excluded — they share no chords with the progression.
   const MODE_PREF: Record<string, number> = {
     Major: 0, Lydian: 1, Mixolydian: 2, Dorian: 3, Minor: 4, Phrygian: 5, Locrian: 6,
   }
@@ -205,9 +205,8 @@ function computeDerived(
     const firstRootPc = parsedChords[0].ri
     const allRootPcs  = new Set(parsedChords.map(c => c.ri))
     const ranked = scoreAllKeys(parsedChords)
-    const topScore = ranked[0]?.score ?? 0
     topKeys = ranked
-      .filter(r => r.score === topScore)
+      .filter(r => r.score > 0)
       .map(r => {
         const tonicPc = r.kc[0].ni
         let tb = 0
@@ -216,8 +215,8 @@ function computeDerived(
         tb -= (MODE_PREF[r.modeName] ?? 10) * 0.01
         return { ...r, _tb: tb }
       })
-      .sort((a, b) => (b as any)._tb - (a as any)._tb || a.r - b.r)
-      .slice(0, 3)
+      .sort((a, b) => b.score - a.score || (b as any)._tb - (a as any)._tb)
+      .slice(0, 8)
   }
 
   return {
