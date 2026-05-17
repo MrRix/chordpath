@@ -42,7 +42,7 @@ export default function ChordInputStrip() {
       setTimeout(() => setInputError(false), 600)
       return
     }
-    addChord(parsed.name)
+    addChord(parsed.name, parsed.unrecognized, parsed.hint)
     setInputValue('')
     inputRef.current?.focus()
   }, [inputValue, addChord])
@@ -82,13 +82,19 @@ export default function ChordInputStrip() {
             <div
               key={slot.id}
               className="chip-enter"
+              title={slot.unrecognized ? `⚠ ${slot.hint}` : undefined}
               style={{
-                background: 'var(--color-bg-secondary)',
-                border: '1px solid var(--color-border-secondary)',
+                background: slot.unrecognized
+                  ? 'rgba(245,146,58,.08)'
+                  : 'var(--color-bg-secondary)',
+                border: slot.unrecognized
+                  ? '1px solid rgba(245,146,58,.45)'
+                  : '1px solid var(--color-border-secondary)',
                 borderRadius: 'var(--radius)',
                 padding: '5px 22px 5px 9px',
                 display: 'flex',
                 alignItems: 'center',
+                gap: 5,
                 position: 'relative',
                 flexShrink: 0,
               }}
@@ -98,12 +104,26 @@ export default function ChordInputStrip() {
                   fontFamily: 'var(--font-mono)',
                   fontSize: 14,
                   fontWeight: 500,
-                  color: 'var(--color-text-primary)',
+                  color: slot.unrecognized ? '#b45309' : 'var(--color-text-primary)',
                   lineHeight: 1,
                 }}
               >
                 {slot.chordName}
               </span>
+              {/* Warning badge for unrecognized chord suffixes */}
+              {slot.unrecognized && (
+                <span
+                  style={{
+                    fontSize: 9,
+                    fontWeight: 700,
+                    color: '#b45309',
+                    lineHeight: 1,
+                    opacity: 0.75,
+                  }}
+                >
+                  !
+                </span>
+              )}
               {/* Remove button */}
               <button
                 onClick={() => removeChord(slot.id)}

@@ -27,6 +27,8 @@ export interface ProgressionSlot {
   romanNumeral: string | null
   chordFunction: "tonic" | "subdominant" | "dominant" | "relative" | null
   voicingIndex: number
+  unrecognized: boolean   // suffix wasn't in vocabulary — chord treated as major
+  hint: string            // human-readable suggestion, e.g. "did you mean C#m?"
 }
 
 export interface DiatonicChord {
@@ -85,7 +87,7 @@ interface AppState {
   tapGlobalFret: (string: number, fret: number) => void
   clearGlobalFretboard: () => void
   setGlobalDetectedChord: (chord: string | null) => void
-  addChordToProgression: (chordName: string) => void
+  addChordToProgression: (chordName: string, unrecognized?: boolean, hint?: string) => void
   createEmptySlot: () => void
   setSlotChordName: (slotId: string, chordName: string) => void
   removeChordFromProgression: (slotId: string) => void
@@ -234,7 +236,7 @@ function computeDerived(
   }
 }
 
-function makeSlot(chordName: string | null = null): ProgressionSlot {
+function makeSlot(chordName: string | null = null, unrecognized = false, hint = ''): ProgressionSlot {
   return {
     id: Math.random().toString(36).slice(2),
     chordName,
@@ -243,6 +245,8 @@ function makeSlot(chordName: string | null = null): ProgressionSlot {
     romanNumeral: null,
     chordFunction: null,
     voicingIndex: 0,
+    unrecognized,
+    hint,
   }
 }
 
@@ -290,9 +294,9 @@ export const useAppStore = create<AppState>()(
 
       setGlobalDetectedChord: (chord) => set({ globalDetectedChord: chord }),
 
-      addChordToProgression: (chordName) => set(state => {
+      addChordToProgression: (chordName, unrecognized = false, hint = '') => set(state => {
         if (state.progression.length >= 5) return state
-        const newSlots = [...state.progression, makeSlot(chordName)]
+        const newSlots = [...state.progression, makeSlot(chordName, unrecognized, hint)]
         return { ...computeDerived(newSlots, state.autoDetectKey, state.manualKey) }
       }),
 
