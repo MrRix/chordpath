@@ -2,7 +2,22 @@ import { useEffect, useRef, useState } from 'react'
 import { SVGuitarChord } from 'svguitar'
 import { useAppStore } from '../../store/useAppStore'
 import { getChordVoicings } from '../../theory/chordsDb'
-import { getChordDescription } from '../../theory/descriptions'
+import { keyChords, MODES, parseChord } from '../../theory/keyDetection'
+
+// Derive the correct Roman numeral from the chord name + key row (pitch-class match,
+// so enharmonics like F#/Gb never cause a mismatch).
+function deriveRoman(chordName: string, keyName: string): string {
+  const parsed = parseChord(chordName)
+  if (!parsed) return '?'
+  const parts = keyName.split(' ')
+  const modeName = parts.slice(1).join(' ')
+  const modeIdx  = MODES.findIndex(m => m.name === modeName)
+  if (modeIdx < 0) return '?'
+  const rootParsed = parseChord(parts[0])
+  if (!rootParsed) return '?'
+  const kc = keyChords(rootParsed.ri, modeIdx)
+  return kc.find(c => c.ni === parsed.ri && c.q === parsed.q)?.roman ?? '?'
+}
 
 // ── Colour map by key context for the role line ───────────────────────────────
 const ROLE_COLOURS: Record<string, string> = {
@@ -60,27 +75,44 @@ export default function DiagramPanel({ isMobile = false }: DiagramPanelProps) {
     try {
       new SVGuitarChord(diagramRef.current)
         .configure({
-          fingerColor:     dotColor,
+          fingerColor:              dotColor,
           fretColor,
           stringColor,
-          backgroundColor: 'transparent',
-          color:           textColor,
-          fontFamily:      "'JetBrains Mono', monospace",
-          frets:           5,
-          position:        voicing.baseFret,
+          backgroundColor:          'transparent',
+          color:                    textColor,
+          fontFamily:               "'JetBrains Mono', monospace",
+          frets:                    5,
+          position:                 voicing.baseFret,
+          emptyStringIndicatorSize: 0.3,
         })
         .chord({
           fingers: [...voicing.frets].reverse().map(
             (f, i) => [i + 1, f === -1 ? 'x' : f] as [number, number | 'x']
           ),
-          barres: voicing.barres.map(b => ({ fret: b, fromString: 1, toString: 6 })),
+          // fromString must be the lowest-x (leftmost) string so the barre extends rightward.
+          // In SVGuitarChord string 6 = low E (left) and string 1 = high e (right).
+          barres: voicing.barres.map(b => ({ fret: b, fromString: 6, toString: 1 })),
         })
         .draw()
+      // SVGuitarChord bug: RECTANGLE barre fill is hardcoded to 'black'.
+      // Patch: recolour any element with fill="black" — only the buggy barre produces this.
+      diagramRef.current.querySelectorAll('[fill="black"]').forEach(el => {
+        ;(el as SVGElement).setAttribute('fill', dotColor)
+      })
+      // Make the SVG fluid: scale to container width so the container controls height,
+      // not the other way around. This prevents layout shift when O/X rows appear/disappear.
+      const svgEl = diagramRef.current.querySelector('svg')
+      if (svgEl) {
+        svgEl.style.width  = '100%'
+        svgEl.style.height = 'auto'
+        svgEl.style.display = 'block'
+      }
     } catch { /* ignore */ }
   }, [voicing])
 
-  const description = selectedChord
-    ? getChordDescription(selectedChord.keyContext, selectedChord.roman)
+  // Derive Roman numeral live so it's always correct regardless of when the chord was selected
+  const roman = selectedChord
+    ? deriveRoman(selectedChord.name, selectedChord.keyName)
     : ''
 
   const roleColour = selectedChord
@@ -91,7 +123,7 @@ export default function DiagramPanel({ isMobile = false }: DiagramPanelProps) {
   const content = (
     <>
       {/* Panel header */}
-      <div style={{ padding: '12px 14px 0', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+      <div style={{ padding: '10px 12px 0', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
         <span
           style={{
             fontSize: 9,
@@ -169,47 +201,43 @@ export default function DiagramPanel({ isMobile = false }: DiagramPanelProps) {
       {/* Filled state */}
       {selectedChord && (
         <>
-          {/* Chord name + role — always visible at top */}
-          <div
-            style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: 28,
-              fontWeight: 500,
-              color: 'var(--color-text-primary)',
-              padding: '4px 14px 2px',
-              lineHeight: 1,
-              flexShrink: 0,
-            }}
-          >
-            {selectedChord.name}
+          {/* Chord name + role */}
+          <div style={{ padding: '2px 14px 0', flexShrink: 0 }}>
+            <div
+              style={{
+                fontFamily: 'var(--font-display)',
+                fontSize: isMobile ? 32 : 26,
+                fontWeight: 500,
+                color: 'var(--color-text-primary)',
+                lineHeight: 1,
+              }}
+            >
+              {selectedChord.name}
+            </div>
+            <div
+              style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: 11,
+                marginTop: 3,
+                color: roleColour,
+              }}
+            >
+              {roman} · {selectedChord.keyName}
+            </div>
           </div>
 
-          <div
-            style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 11,
-              padding: '0 14px 10px',
-              color: roleColour,
-              flexShrink: 0,
-            }}
-          >
-            {selectedChord.roman} in {selectedChord.keyName}
-          </div>
-
-          {/* Scrollable body — diagram + voicing tabs + description */}
-          <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
-
-          <div ref={diagramRef} style={{ padding: '0 14px', flexShrink: 0 }} />
-
+          {/* ── Voicing selector — ABOVE diagram so it's always visible ── */}
           {voicings.length > 1 && (
             <div
               style={{
                 display: 'flex',
-                gap: 4,
-                padding: '6px 14px 2px',
-                justifyContent: 'center',
+                gap: 6,
+                padding: isMobile ? '10px 14px 4px' : '8px 14px 4px',
+                overflowX: 'auto',
                 flexShrink: 0,
-              }}
+                // hide scrollbar but keep scrollability
+                scrollbarWidth: 'none',
+              } as React.CSSProperties}
             >
               {voicings.map((v, i) => {
                 const active = i === voicingIdx
@@ -219,30 +247,30 @@ export default function DiagramPanel({ isMobile = false }: DiagramPanelProps) {
                     onClick={() => setVoicingIdx(i)}
                     title={`Voicing ${i + 1}: ${positionLabel(v)}`}
                     style={{
-                      flex: 1,
-                      padding: '6px 2px',
-                      minHeight: 32,
-                      borderRadius: 4,
-                      fontSize: 10,
+                      flexShrink: 0,
+                      padding: isMobile ? '0 16px' : '0 12px',
+                      height: isMobile ? 40 : 30,
+                      borderRadius: 20,
+                      fontSize: isMobile ? 13 : 11,
                       fontFamily: 'var(--font-mono)',
                       fontWeight: active ? 600 : 400,
                       background: active ? 'var(--accent)' : 'transparent',
-                      color: active ? '#fff' : 'var(--color-text-tertiary)',
-                      border: active ? 'none' : '0.5px solid var(--color-border-tertiary)',
+                      color: active ? '#fff' : 'var(--color-text-secondary)',
+                      border: active ? 'none' : '1px solid var(--color-border-secondary)',
                       cursor: 'pointer',
-                      transition: 'all .1s',
-                      lineHeight: 1.6,
+                      transition: 'all .12s',
+                      whiteSpace: 'nowrap',
                     }}
                     onMouseEnter={e => {
                       if (!active) {
-                        e.currentTarget.style.borderColor = 'var(--color-border-secondary)'
-                        e.currentTarget.style.color = 'var(--color-text-secondary)'
+                        e.currentTarget.style.borderColor = 'var(--accent)'
+                        e.currentTarget.style.color = 'var(--accent)'
                       }
                     }}
                     onMouseLeave={e => {
                       if (!active) {
-                        e.currentTarget.style.borderColor = 'var(--color-border-tertiary)'
-                        e.currentTarget.style.color = 'var(--color-text-tertiary)'
+                        e.currentTarget.style.borderColor = 'var(--color-border-secondary)'
+                        e.currentTarget.style.color = 'var(--color-text-secondary)'
                       }
                     }}
                   >
@@ -253,25 +281,48 @@ export default function DiagramPanel({ isMobile = false }: DiagramPanelProps) {
             </div>
           )}
 
-          <div style={{ height: '0.5px', background: 'var(--color-border-tertiary)', margin: '10px 14px', flexShrink: 0 }} />
-
+          {/* ── Chord diagram ── */}
+          {/* Fixed-height container prevents layout shift when O/X row appears/disappears */}
           <div
+            ref={diagramRef}
             style={{
-              padding: '0 14px 14px',
-              fontSize: 12,
-              color: 'var(--color-text-secondary)',
-              lineHeight: 1.65,
-              fontFamily: 'var(--font-body)',
+              padding: '0 14px',
+              height: isMobile ? 240 : 220,
+              overflow: 'hidden',
+              flexShrink: 0,
             }}
-          >
-            {description || (
-              <span style={{ color: 'var(--color-text-tertiary)', fontStyle: 'italic' }}>
-                No description available for this chord in this context.
-              </span>
-            )}
-          </div>
+          />
 
-          </div> {/* end scrollable body */}
+          {/* Dot indicators — subtle "there are more" signal below diagram */}
+          {voicings.length > 1 && (
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'center',
+                gap: 5,
+                padding: '4px 0 10px',
+                flexShrink: 0,
+              }}
+            >
+              {voicings.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setVoicingIdx(i)}
+                  style={{
+                    width: i === voicingIdx ? 16 : 6,
+                    height: 6,
+                    borderRadius: 3,
+                    background: i === voicingIdx ? 'var(--accent)' : 'var(--color-border-secondary)',
+                    border: 'none',
+                    padding: 0,
+                    cursor: 'pointer',
+                    transition: 'all .2s',
+                  }}
+                  aria-label={`Voicing ${i + 1}`}
+                />
+              ))}
+            </div>
+          )}
         </>
       )}
     </>
