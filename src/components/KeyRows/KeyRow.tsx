@@ -27,13 +27,13 @@ const COLOURS: Record<KeyContext, { h: string; dk: string; bg: string; border: s
 
 // ── Feel label lookup (mirrors keyDetection.ts ch field, uses mode primary name) ──
 const FEEL_LABELS: Record<string, string> = {
-  Major:      'Bright & resolved',
-  Lydian:     'Bright with a raised fourth — ethereal',
-  Mixolydian: 'Bluesy',
-  Minor:      'Dark & introspective',
-  Dorian:     'Minor with raised sixth — soulful',
-  Phrygian:   'Dark, Spanish feel',
-  Locrian:    'Unstable, tense',
+  Major:      'Grounded & singable — pop, folk, anthems',
+  Lydian:     'Dreamy & weightless — film scores, floating wonder',
+  Mixolydian: 'Rock swagger — major feel with a rebellious edge',
+  Minor:      'Emotional depth — ballads, drama, longing',
+  Dorian:     'Groove-forward & bittersweet — jazz, R&B, folk noir',
+  Phrygian:   'Menacing & exotic — flamenco, metal, cinematic danger',
+  Locrian:    'Dissonant & restless — tension without release',
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
