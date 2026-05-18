@@ -12,12 +12,13 @@ function romanColour(roman: string): string {
 }
 
 interface PaletteCardProps {
-  chord:         DiatonicChordDef
-  inProgression: boolean
-  isSelected:    boolean
-  keyContext:    KeyContext
-  keyName:       string
-  onTap:         (chord: SelectedChord) => void
+  chord:            DiatonicChordDef
+  inProgression:    boolean
+  isSelected:       boolean
+  keyContext:       KeyContext
+  keyName:          string
+  onTap:            (chord: SelectedChord) => void
+  progressionName?: string   // e.g. "D/F#" — if set, clicking opens this inversion's diagram
 }
 
 export default function PaletteCard({
@@ -27,6 +28,7 @@ export default function PaletteCard({
   keyContext,
   keyName,
   onTap,
+  progressionName,
 }: PaletteCardProps) {
   const isMobile = useIsMobile()
   let bg        = 'var(--card-bg)'
@@ -47,7 +49,9 @@ export default function PaletteCard({
   const romanColor = romanColour(chord.roman)
 
   const handleClick = () => {
-    onTap({ name: chord.name, roman: chord.roman, keyContext, keyName })
+    // If the user entered an inversion (e.g. D/F#), open that diagram — not plain D
+    const name = progressionName ?? chord.name
+    onTap({ name, roman: chord.roman, keyContext, keyName })
   }
 
   return (
@@ -91,9 +95,10 @@ export default function PaletteCard({
           whiteSpace: 'nowrap',
           overflow: 'hidden',
           textOverflow: 'ellipsis',
+          maxWidth: '100%',
         }}
       >
-        {chord.name}
+        {progressionName ?? chord.name}
       </div>
       <div
         style={{

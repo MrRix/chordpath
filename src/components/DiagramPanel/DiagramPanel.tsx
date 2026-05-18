@@ -1,22 +1,43 @@
 import { useEffect, useRef, useState } from 'react'
-import { SVGuitarChord } from 'svguitar'
 import { useAppStore } from '../../store/useAppStore'
 import { getChordVoicings } from '../../theory/chordsDb'
 import { keyChords, MODES, parseChord } from '../../theory/keyDetection'
+import { drawDiagram } from '../../theory/diagramRenderer'
+import { getQualityLabel, NOTE_TO_PC } from '../../theory/chordRegistry'
 
-// Derive the correct Roman numeral from the chord name + key row (pitch-class match,
-// so enharmonics like F#/Gb never cause a mismatch).
+// ── Roman numeral derivation ──────────────────────────────────────────────────
+// Uses pitch-class matching so enharmonics (F#/Gb) never cause a mismatch.
+// For slash chords, derives from the chord root and appends inversion label.
 function deriveRoman(chordName: string, keyName: string): string {
   const parsed = parseChord(chordName)
   if (!parsed) return '?'
-  const parts = keyName.split(' ')
+
+  const parts    = keyName.split(' ')
   const modeName = parts.slice(1).join(' ')
   const modeIdx  = MODES.findIndex(m => m.name === modeName)
   if (modeIdx < 0) return '?'
+
   const rootParsed = parseChord(parts[0])
   if (!rootParsed) return '?'
+
   const kc = keyChords(rootParsed.ri, modeIdx)
-  return kc.find(c => c.ni === parsed.ri && c.q === parsed.q)?.roman ?? '?'
+  const match = kc.find(c => c.ni === parsed.ri && c.q === parsed.q)
+  const baseRoman = match?.roman ?? '?'
+
+  // For slash chords: append bass note's scale degree if diatonic,
+  // or mark as non-diatonic bass.
+  if (parsed.bass) {
+    const bassPC  = NOTE_TO_PC[parsed.bass] ?? -1
+    const scalePC = new Set(MODES[modeIdx].iv.map(i => (rootParsed.ri + i) % 12))
+    if (bassPC >= 0 && scalePC.has(bassPC)) {
+      // Find which scale degree the bass note is
+      const bassDegree = kc.find(c => c.ni === bassPC)
+      if (bassDegree) return `${baseRoman}/${bassDegree.roman}`
+    }
+    return `${baseRoman}/(♭bass)`
+  }
+
+  return baseRoman
 }
 
 // ── Colour map by key context for the role line ───────────────────────────────
@@ -40,9 +61,13 @@ function EmptyFretGrid() {
   )
 }
 
+// ── Voicing label helper ──────────────────────────────────────────────────────
 import type { ChordPosition } from '../../theory/chordsDb'
 
 function positionLabel(v: ChordPosition): string {
+  // Use the pre-computed label from chordsDb if available
+  if (v.label) return v.label
+  // Fallback
   const hasOpen = v.frets.some(f => f === 0)
   if (v.baseFret <= 1 && hasOpen) return 'Open'
   return `${v.baseFret}fr`
@@ -62,64 +87,41 @@ export default function DiagramPanel({ isMobile = false }: DiagramPanelProps) {
 
   useEffect(() => { setVoicingIdx(0) }, [selectedChord?.name])
 
+  // Diagram-first layout: diagram is the visual hero at ~60% of panel width.
+  // Heading text is scaled down so the diagram has the most visual weight.
   useEffect(() => {
     if (!diagramRef.current) return
-    diagramRef.current.innerHTML = ''
-    if (!voicing) return
-    // CSS vars live on body.theme-canvas — must read from body, not documentElement
-    const cs = getComputedStyle(document.body)
-    const dotColor    = '#5EBEC4'
-    const fretColor   = cs.getPropertyValue('--fret-color').trim()   || '#E2D9B8'
-    const stringColor = cs.getPropertyValue('--string-color').trim() || '#9A8E7A'
-    const textColor   = cs.getPropertyValue('--text').trim()         || '#2D2926'
-    try {
-      new SVGuitarChord(diagramRef.current)
-        .configure({
-          fingerColor:              dotColor,
-          fretColor,
-          stringColor,
-          backgroundColor:          'transparent',
-          color:                    textColor,
-          fontFamily:               "'JetBrains Mono', monospace",
-          frets:                    5,
-          position:                 voicing.baseFret,
-          emptyStringIndicatorSize: 0.3,
-        })
-        .chord({
-          fingers: [...voicing.frets].reverse().map(
-            (f, i) => [i + 1, f === -1 ? 'x' : f] as [number, number | 'x']
-          ),
-          // fromString must be the lowest-x (leftmost) string so the barre extends rightward.
-          // In SVGuitarChord string 6 = low E (left) and string 1 = high e (right).
-          barres: voicing.barres.map(b => ({ fret: b, fromString: 6, toString: 1 })),
-        })
-        .draw()
-      // SVGuitarChord bug: RECTANGLE barre fill is hardcoded to 'black'.
-      // Patch: recolour any element with fill="black" — only the buggy barre produces this.
-      diagramRef.current.querySelectorAll('[fill="black"]').forEach(el => {
-        ;(el as SVGElement).setAttribute('fill', dotColor)
-      })
-      // Make the SVG fluid: scale to container width so the container controls height,
-      // not the other way around. This prevents layout shift when O/X rows appear/disappear.
-      const svgEl = diagramRef.current.querySelector('svg')
-      if (svgEl) {
-        svgEl.style.width  = '100%'
-        svgEl.style.height = 'auto'
-        svgEl.style.display = 'block'
-      }
-    } catch { /* ignore */ }
-  }, [voicing])
+    if (!voicing) { diagramRef.current.innerHTML = ''; return }
 
-  // Derive Roman numeral live so it's always correct regardless of when the chord was selected
+    const bassNote = selectedChord?.name.includes('/')
+      ? selectedChord.name.split('/')[1]
+      : undefined
+
+    diagramRef.current.innerHTML = drawDiagram(voicing, {
+      width:    isMobile ? 166 : 148,
+      height:   isMobile ? 204 : 178,
+      bassNote,
+    })
+  }, [voicing, isMobile, selectedChord?.name])
+
+  // Derive Roman numeral — always correct regardless of when chord was selected
   const roman = selectedChord
     ? deriveRoman(selectedChord.name, selectedChord.keyName)
+    : ''
+
+  // Quality label line, e.g. 'minor', 'major 7th'
+  const qualityLabel = selectedChord
+    ? (() => {
+        const parsed = parseChord(selectedChord.name)
+        return parsed ? getQualityLabel(parsed.suf) : ''
+      })()
     : ''
 
   const roleColour = selectedChord
     ? (ROLE_COLOURS[selectedChord.keyContext] ?? 'var(--accent)')
     : 'var(--accent)'
 
-  // ── Shared inner content ────────────────────────────────────────────────────
+  // ── Shared inner content ──────────────────────────────────────────────────
   const content = (
     <>
       {/* Panel header */}
@@ -201,24 +203,38 @@ export default function DiagramPanel({ isMobile = false }: DiagramPanelProps) {
       {/* Filled state */}
       {selectedChord && (
         <>
-          {/* Chord name + role */}
-          <div style={{ padding: '2px 14px 0', flexShrink: 0 }}>
-            <div
-              style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: isMobile ? 32 : 26,
-                fontWeight: 500,
-                color: 'var(--color-text-primary)',
-                lineHeight: 1,
-              }}
-            >
-              {selectedChord.name}
+          {/* Chord name + role — compact label, diagram is the hero */}
+          <div style={{ padding: '2px 14px 4px', flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+              <span
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  fontSize: isMobile ? 24 : 20,
+                  fontWeight: 600,
+                  color: 'var(--color-text-primary)',
+                  lineHeight: 1,
+                }}
+              >
+                {selectedChord.name}
+              </span>
+              {qualityLabel && (
+                <span
+                  style={{
+                    fontFamily: 'var(--font-body)',
+                    fontSize: isMobile ? 11 : 10,
+                    color: 'var(--color-text-tertiary)',
+                    textTransform: 'capitalize',
+                  }}
+                >
+                  {qualityLabel}
+                </span>
+              )}
             </div>
             <div
               style={{
                 fontFamily: 'var(--font-mono)',
-                fontSize: 11,
-                marginTop: 3,
+                fontSize: isMobile ? 11 : 10,
+                marginTop: 2,
                 color: roleColour,
               }}
             >
@@ -226,74 +242,88 @@ export default function DiagramPanel({ isMobile = false }: DiagramPanelProps) {
             </div>
           </div>
 
-          {/* ── Voicing selector — ABOVE diagram so it's always visible ── */}
+          {/* Voicing selector — gradient fade indicates overflow is scrollable */}
           {voicings.length > 1 && (
-            <div
-              style={{
-                display: 'flex',
-                gap: 6,
-                padding: isMobile ? '10px 14px 4px' : '8px 14px 4px',
-                overflowX: 'auto',
-                flexShrink: 0,
-                // hide scrollbar but keep scrollability
-                scrollbarWidth: 'none',
-              } as React.CSSProperties}
-            >
-              {voicings.map((v, i) => {
-                const active = i === voicingIdx
-                return (
-                  <button
-                    key={i}
-                    onClick={() => setVoicingIdx(i)}
-                    title={`Voicing ${i + 1}: ${positionLabel(v)}`}
-                    style={{
-                      flexShrink: 0,
-                      padding: isMobile ? '0 16px' : '0 12px',
-                      height: isMobile ? 40 : 30,
-                      borderRadius: 20,
-                      fontSize: isMobile ? 13 : 11,
-                      fontFamily: 'var(--font-mono)',
-                      fontWeight: active ? 600 : 400,
-                      background: active ? 'var(--accent)' : 'transparent',
-                      color: active ? '#fff' : 'var(--color-text-secondary)',
-                      border: active ? 'none' : '1px solid var(--color-border-secondary)',
-                      cursor: 'pointer',
-                      transition: 'all .12s',
-                      whiteSpace: 'nowrap',
-                    }}
-                    onMouseEnter={e => {
-                      if (!active) {
-                        e.currentTarget.style.borderColor = 'var(--accent)'
-                        e.currentTarget.style.color = 'var(--accent)'
-                      }
-                    }}
-                    onMouseLeave={e => {
-                      if (!active) {
-                        e.currentTarget.style.borderColor = 'var(--color-border-secondary)'
-                        e.currentTarget.style.color = 'var(--color-text-secondary)'
-                      }
-                    }}
-                  >
-                    {positionLabel(v)}
-                  </button>
-                )
-              })}
+            <div style={{ position: 'relative', flexShrink: 0 }}>
+              {/* Fade-right mask — always present, hidden by bg when no overflow */}
+              <div
+                aria-hidden="true"
+                style={{
+                  position: 'absolute',
+                  right: 0, top: 0, bottom: 0,
+                  width: 28,
+                  background: 'linear-gradient(to right, transparent, var(--panel-bg))',
+                  pointerEvents: 'none',
+                  zIndex: 1,
+                }}
+              />
+              <div
+                style={{
+                  display: 'flex',
+                  gap: 5,
+                  padding: isMobile ? '10px 14px 6px' : '8px 12px 5px',
+                  overflowX: 'auto',
+                  scrollbarWidth: 'none',
+                } as React.CSSProperties}
+              >
+                {voicings.map((v, i) => {
+                  const active = i === voicingIdx
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => setVoicingIdx(i)}
+                      title={`Voicing ${i + 1}`}
+                      style={{
+                        flexShrink: 0,
+                        padding: isMobile ? '0 14px' : '0 10px',
+                        height: isMobile ? 36 : 26,
+                        borderRadius: 20,
+                        fontSize: isMobile ? 12 : 10,
+                        fontFamily: 'var(--font-mono)',
+                        fontWeight: active ? 600 : 400,
+                        background: active ? 'var(--accent)' : 'transparent',
+                        color: active ? '#fff' : 'var(--color-text-secondary)',
+                        border: active ? 'none' : '1px solid var(--color-border-secondary)',
+                        cursor: 'pointer',
+                        transition: 'all .12s',
+                        whiteSpace: 'nowrap',
+                      }}
+                      onMouseEnter={e => {
+                        if (!active) {
+                          e.currentTarget.style.borderColor = 'var(--accent)'
+                          e.currentTarget.style.color = 'var(--accent)'
+                        }
+                      }}
+                      onMouseLeave={e => {
+                        if (!active) {
+                          e.currentTarget.style.borderColor = 'var(--color-border-secondary)'
+                          e.currentTarget.style.color = 'var(--color-text-secondary)'
+                        }
+                      }}
+                    >
+                      {positionLabel(v)}
+                    </button>
+                  )
+                })}
+              </div>
             </div>
           )}
 
-          {/* ── Chord diagram ── */}
-          {/* Fixed-height container prevents layout shift when O/X row appears/disappears */}
+          {/* Chord diagram — centered, diagram-first: takes most of the panel height */}
           <div
-            ref={diagramRef}
             style={{
-              padding: '0 14px',
-              height: isMobile ? 240 : 220,
-              overflow: 'hidden',
+              display: 'flex',
+              justifyContent: 'center',
+              padding: '2px 12px 0',
+              height: isMobile ? 216 : 190,
               flexShrink: 0,
+              overflow: 'hidden',
             }}
-          />
+          >
+            <div ref={diagramRef} />
+          </div>
 
-          {/* Dot indicators — subtle "there are more" signal below diagram */}
+          {/* Dot indicators */}
           {voicings.length > 1 && (
             <div
               style={{
@@ -328,7 +358,7 @@ export default function DiagramPanel({ isMobile = false }: DiagramPanelProps) {
     </>
   )
 
-  // ── Mobile: bottom sheet ────────────────────────────────────────────────────
+  // ── Mobile: bottom sheet ──────────────────────────────────────────────────
   if (isMobile) {
     return (
       <>
@@ -349,9 +379,7 @@ export default function DiagramPanel({ isMobile = false }: DiagramPanelProps) {
         <div
           style={{
             position: 'fixed',
-            left: 0,
-            right: 0,
-            bottom: 0,
+            left: 0, right: 0, bottom: 0,
             zIndex: 21,
             background: 'var(--panel-bg)',
             borderTop: '0.5px solid var(--color-border-secondary)',
@@ -359,7 +387,7 @@ export default function DiagramPanel({ isMobile = false }: DiagramPanelProps) {
             boxShadow: '0 -8px 32px rgba(0,0,0,.22)',
             display: 'flex',
             flexDirection: 'column',
-            maxHeight: '72dvh',
+            maxHeight: '78dvh',
             transform: selectedChord ? 'translateY(0)' : 'translateY(100%)',
             transition: 'transform .28s cubic-bezier(.32,.72,0,1)',
           }}
@@ -374,7 +402,7 @@ export default function DiagramPanel({ isMobile = false }: DiagramPanelProps) {
     )
   }
 
-  // ── Desktop: side column ────────────────────────────────────────────────────
+  // ── Desktop: side column ──────────────────────────────────────────────────
   return (
     <div
       style={{
