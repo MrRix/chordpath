@@ -12,20 +12,19 @@ function normalizeChordName(name: string): string {
 interface FretboardPanelProps { isMobile?: boolean }
 
 export default function FretboardPanel({ isMobile = false }: FretboardPanelProps) {
-  const fretboardOpen         = useAppStore(s => s.fretboardPanelOpen)
-  const setFretboardOpen      = useAppStore(s => s.setFretboardOpen)
-  const globalFretPositions   = useAppStore(s => s.globalFretPositions)
-  const globalDetectedChord   = useAppStore(s => s.globalDetectedChord)
-  const tapGlobalFret         = useAppStore(s => s.tapGlobalFret)
-  const clearGlobalFretboard  = useAppStore(s => s.clearGlobalFretboard)
-  const resetFretboardToOpen  = useAppStore(s => s.resetFretboardToOpen)
+  const fretboardOpen          = useAppStore(s => s.fretboardPanelOpen)
+  const setFretboardOpen       = useAppStore(s => s.setFretboardOpen)
+  const globalFretPositions    = useAppStore(s => s.globalFretPositions)
+  const globalDetectedChord    = useAppStore(s => s.globalDetectedChord)
+  const tapGlobalFret          = useAppStore(s => s.tapGlobalFret)
+  const clearGlobalFretboard   = useAppStore(s => s.clearGlobalFretboard)
   const setGlobalDetectedChord = useAppStore(s => s.setGlobalDetectedChord)
-  const addChord              = useAppStore(s => s.addChordToProgression)
-  const progression           = useAppStore(s => s.progression)
+  const addChord               = useAppStore(s => s.addChordToProgression)
+  const progression            = useAppStore(s => s.progression)
 
-  // Reset to open strings every time the panel opens
+  // Clear to blank slate every time the panel opens (all muted, no detected chord)
   useEffect(() => {
-    if (fretboardOpen) resetFretboardToOpen()
+    if (fretboardOpen) clearGlobalFretboard()
   }, [fretboardOpen]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Convert FretPosition[] → strings array for Fretboard component
@@ -66,7 +65,7 @@ export default function FretboardPanel({ isMobile = false }: FretboardPanelProps
   }
 
   const openCount = strings.filter(f => f >= 0).length
-  const canAdd    = !!globalDetectedChord && progression.filter(s => s.chordName).length < 8
+  const canAdd    = !!globalDetectedChord && progression.filter(s => s.chordName).length < 5
 
   const handleAdd = () => {
     if (!globalDetectedChord) return
@@ -136,10 +135,10 @@ export default function FretboardPanel({ isMobile = false }: FretboardPanelProps
           <button
             onClick={() => setFretboardOpen(false)}
             style={{
-              width: 22,
-              height: 22,
+              width: isMobile ? 36 : 22,
+              height: isMobile ? 36 : 22,
               borderRadius: '50%',
-              fontSize: 14,
+              fontSize: isMobile ? 20 : 14,
               color: 'var(--color-text-tertiary)',
               background: 'none',
               border: 'none',
@@ -173,7 +172,7 @@ export default function FretboardPanel({ isMobile = false }: FretboardPanelProps
             fontFamily: 'var(--font-body)',
           }}
         >
-          Tap a fret to press it. Tap the ○/× row to toggle a string open or muted.
+          Tap a fret to press it, tap again to mute. Tap ○ or × above to open a string.
         </p>
 
         {/* ── Fretboard ────────────────────────────────────────────────── */}
@@ -241,7 +240,7 @@ export default function FretboardPanel({ isMobile = false }: FretboardPanelProps
           {/* Clear button */}
           {openCount > 0 && (
             <button
-              onClick={resetFretboardToOpen}
+              onClick={clearGlobalFretboard}
               title="Reset to open strings"
               style={{
                 fontSize: 10,
