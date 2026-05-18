@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { KeyScore } from '../../theory/keyDetection'
+import { parseChord } from '../../theory/keyDetection'
 import type { SelectedChord, KeyContext } from '../../store/useAppStore'
 import { getKeyContext } from '../../theory/descriptions'
 import PaletteCard from './PaletteCard'
@@ -292,8 +293,31 @@ export default function KeyRow({ keyScore, progressionChordNames, selectedChord,
         }}
       >
         {keyScore.kc.map(chord => {
-          const inProg = progressionChordNames.includes(chord.name)
-          const isSel  = selectedChord?.name === chord.name && selectedChord?.keyName === keyName
+          // 1. Exact name match (plain chord in progression)
+          const exactMatch = progressionChordNames.includes(chord.name)
+
+          // 2. Slash inversion: D/F# → D  (same root, bass note in suffix)
+          const slashMatch = progressionChordNames.find(
+            n => n.includes('/') && n.split('/')[0] === chord.name
+          )
+
+          // 3. Quality extension: G7 → G, Cadd9 → C  (same root pc, richer quality)
+          //    Skips plain triads (maj/min/dim/aug) already covered by exactMatch.
+          const PLAIN_TRIADS = new Set(['maj','min','dim','aug'])
+          const qualityMatch = !slashMatch ? progressionChordNames.find(n => {
+            if (n.includes('/')) return false
+            const p = parseChord(n)
+            if (!p || p.unrecognized) return false
+            if (PLAIN_TRIADS.has(p.q)) return false
+            return p.ri === chord.ni
+          }) : undefined
+
+          const progressionName = slashMatch ?? qualityMatch
+          const inProg = exactMatch || !!progressionName
+          const isSel  = (
+            selectedChord?.name === chord.name ||
+            (!!progressionName && selectedChord?.name === progressionName)
+          ) && selectedChord?.keyName === keyName
 
           return (
             <PaletteCard
@@ -304,6 +328,7 @@ export default function KeyRow({ keyScore, progressionChordNames, selectedChord,
               keyContext={ctx}
               keyName={keyName}
               onTap={onChordTap}
+              progressionName={progressionName}
             />
           )
         })}
