@@ -178,7 +178,7 @@ export default function KeyRow({ keyScore, progressionChordNames, selectedChord,
               onMouseEnter={e => { e.currentTarget.style.opacity = '1' }}
               onMouseLeave={e => { e.currentTarget.style.opacity = progsOpen ? '1' : '0.8' }}
             >
-              {signature.label}
+              Common progressions
               <span style={{ fontSize: 8, opacity: 0.7 }}>{progsOpen ? '▲' : '▼'}</span>
             </button>
           )}
