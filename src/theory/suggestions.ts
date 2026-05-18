@@ -1,4 +1,4 @@
-import { ROOTS, MODES, MAJOR_LIKE, keyChords, scaleNamesForKey, NOTE_SI } from "./keyDetection"
+import { ROOTS, MODES, MAJOR_LIKE, keyChords, scaleNamesForKey, NOTE_SI, parseChord } from "./keyDetection"
 
 export interface ChordSuggestion {
   chordName:    string
@@ -54,12 +54,19 @@ export function getKeyScale(key: string, modeName: string): string[] {
   return scaleNamesForKey(ri, mi)
 }
 
-/** Map chord name to roman numeral in the given key+mode */
+/**
+ * Map chord name to roman numeral in the given key+mode.
+ * Uses pitch-class matching (not string indexOf) so enharmonic equivalents
+ * (e.g. F# vs Gb) always resolve correctly — same approach as deriveRoman()
+ * in DiagramPanel.
+ */
 export function getChordRomanNumeral(chordName: string, key: string, modeName: string): string {
-  const triads = getKeyTriads(key, modeName)
-  const idx = triads.indexOf(chordName)
-  if (idx < 0) return ""
-  return MODES[modeIndex(modeName)].rm[idx]
+  const parsed = parseChord(chordName)
+  if (!parsed) return ""
+  const ri = rootIndex(key)
+  const mi = modeIndex(modeName)
+  const kc = keyChords(ri, mi)
+  return kc.find(c => c.ni === parsed.ri && c.q === parsed.q)?.roman ?? ""
 }
 
 function chordsToRomanNumerals(chordNames: string[], key: string, modeName: string): string[] {
