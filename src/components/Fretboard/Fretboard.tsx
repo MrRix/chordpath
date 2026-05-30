@@ -8,6 +8,8 @@
  * NOTE: CSS custom properties are resolved in element context (not document root),
  * so all colours use style={{ fill: 'var(--token)' }} rather than getComputedStyle.
  */
+import { useState } from 'react'
+
 interface Props {
   strings?: number[]
   onChange?: (strings: number[]) => void
@@ -28,6 +30,7 @@ export function Fretboard({
   readOnly = false,
   compact = false,
 }: Props) {
+  const [hovered, setHovered] = useState<{ si: number; fi: number } | null>(null)
   // ── Layout constants ────────────────────────────────────────────────────────
   const LEFT_W  = compact ? 0 : 12   // fret-number column width
   const LABEL_H = compact ? 0 : 12   // string-name row height
@@ -54,8 +57,9 @@ export function Fretboard({
   const handleTap = (si: number, fret: number) => {
     if (readOnly || !onChange) return
     const next = [...strings]
-    // Tap same fret → back to open (0); tap different fret → select it
-    next[si] = next[si] === fret ? 0 : fret
+    // Tap same fret → mute (-1); tap different fret → select it
+    // Indicator row is the path to open (0): fret zone only toggles pressed ↔ muted
+    next[si] = next[si] === fret ? -1 : fret
     onChange(next)
   }
 
@@ -220,8 +224,22 @@ export function Fretboard({
             fill="transparent"
             style={{ cursor: 'pointer' }}
             onClick={() => handleTap(si, fi + 1)}
+            onMouseEnter={() => setHovered({ si, fi })}
+            onMouseLeave={() => setHovered(null)}
           />
         ))
+      )}
+
+      {/* ── Hover ghost dot ──────────────────────────────────────────────────── */}
+      {!readOnly && !compact && hovered && strings[hovered.si] !== hovered.fi + 1 && (
+        <circle
+          cx={sx(hovered.si)}
+          cy={fy(hovered.fi + 0.5)}
+          r={5}
+          style={{ fill: 'var(--dot-color)' }}
+          opacity={0.22}
+          pointerEvents="none"
+        />
       )}
 
       {/* ── Pressed-fret dots ───────────────────────────────────────────────── */}

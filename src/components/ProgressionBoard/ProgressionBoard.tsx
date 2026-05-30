@@ -80,7 +80,7 @@ export function ProgressionBoard() {
         <span style={{
           fontFamily: "var(--font-heading)",
           fontSize: 16,
-          color: "var(--text-muted)",
+          color: "var(--color-text-tertiary)",
           letterSpacing: 2,
           textTransform: "uppercase",
         }}>
@@ -93,7 +93,7 @@ export function ProgressionBoard() {
               border: "1px solid var(--accent-border)",
               borderRadius: "var(--radius-sm)",
               padding: "2px 10px",
-              fontFamily: "var(--font-chord)",
+              fontFamily: "var(--font-mono)",
               fontSize: 11,
               color: "var(--accent)",
               letterSpacing: 1,
@@ -108,9 +108,9 @@ export function ProgressionBoard() {
               border: "1px solid var(--pill-border)",
               borderRadius: "var(--radius-sm)",
               padding: "2px 10px",
-              fontFamily: "var(--font-chord)",
+              fontFamily: "var(--font-mono)",
               fontSize: 11,
-              color: "var(--text-muted)",
+              color: "var(--color-text-tertiary)",
             }}>
               {patternMatch.name}
             </span>
@@ -150,7 +150,7 @@ export function ProgressionBoard() {
             border: "none",
             borderRadius: "var(--radius)",
             padding: "8px 18px",
-            fontFamily: "var(--font-chord)",
+            fontFamily: "var(--font-mono)",
             fontSize: 13,
             cursor: chordNames.length ? "pointer" : "default",
             opacity: chordNames.length ? 1 : 0.4,
@@ -164,11 +164,11 @@ export function ProgressionBoard() {
           disabled={!chordNames.length}
           style={{
             background: isLooping ? "var(--sub)" : "var(--card-bg)",
-            color: isLooping ? "#fff" : "var(--text-muted)",
-            border: "1px solid var(--border)",
+            color: isLooping ? "#fff" : "var(--color-text-tertiary)",
+            border: "1px solid var(--color-border-primary)",
             borderRadius: "var(--radius)",
             padding: "8px 18px",
-            fontFamily: "var(--font-chord)",
+            fontFamily: "var(--font-mono)",
             fontSize: 13,
             cursor: chordNames.length ? "pointer" : "default",
             opacity: chordNames.length ? 1 : 0.4,
@@ -189,19 +189,19 @@ export function ProgressionBoard() {
                 background: "var(--input-bg)",
                 border: "1px solid var(--accent-border)",
                 borderRadius: "var(--radius-sm)",
-                color: "var(--text)",
-                fontFamily: "var(--font-chord)",
+                color: "var(--color-text-primary)",
+                fontFamily: "var(--font-mono)",
                 fontSize: 12,
                 padding: "6px 10px",
                 outline: "none",
               }}
             />
             <button onClick={handleSave}
-              style={{ background: "var(--btn-primary-bg)", color: "var(--btn-primary-text)", border: "none", borderRadius: "var(--radius-sm)", padding: "6px 12px", cursor: "pointer", fontFamily: "var(--font-chord)", fontSize: 12 }}>
+              style={{ background: "var(--btn-primary-bg)", color: "var(--btn-primary-text)", border: "none", borderRadius: "var(--radius-sm)", padding: "6px 12px", cursor: "pointer", fontFamily: "var(--font-mono)", fontSize: 12 }}>
               Save
             </button>
             <button onClick={() => { setSavingLabel(null); setLabelInput("") }}
-              style={{ background: "transparent", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: 12 }}>
+              style={{ background: "transparent", border: "none", color: "var(--color-text-tertiary)", cursor: "pointer", fontSize: 12 }}>
               Cancel
             </button>
           </div>
@@ -211,11 +211,11 @@ export function ProgressionBoard() {
             disabled={!chordNames.length}
             style={{
               background: "var(--card-bg)",
-              color: "var(--text-muted)",
-              border: "1px solid var(--border)",
+              color: "var(--color-text-tertiary)",
+              border: "1px solid var(--color-border-primary)",
               borderRadius: "var(--radius)",
               padding: "8px 18px",
-              fontFamily: "var(--font-chord)",
+              fontFamily: "var(--font-mono)",
               fontSize: 13,
               cursor: chordNames.length ? "pointer" : "default",
               opacity: chordNames.length ? 1 : 0.4,
@@ -230,11 +230,11 @@ export function ProgressionBoard() {
           style={{
             marginLeft: "auto",
             background: "transparent",
-            color: "var(--text-muted)",
-            border: "1px solid var(--border)",
+            color: "var(--color-text-tertiary)",
+            border: "1px solid var(--color-border-primary)",
             borderRadius: "var(--radius)",
             padding: "8px 18px",
-            fontFamily: "var(--font-chord)",
+            fontFamily: "var(--font-mono)",
             fontSize: 13,
             cursor: "pointer",
           }}

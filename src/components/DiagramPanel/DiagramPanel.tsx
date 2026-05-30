@@ -4,6 +4,7 @@ import { getChordVoicings } from '../../theory/chordsDb'
 import { keyChords, MODES, parseChord } from '../../theory/keyDetection'
 import { drawDiagram } from '../../theory/diagramRenderer'
 import { getQualityLabel, NOTE_TO_PC } from '../../theory/chordRegistry'
+import { noteAtPosition } from '../../theory/fretboard'
 
 // ── Roman numeral derivation ──────────────────────────────────────────────────
 // Uses pitch-class matching so enharmonics (F#/Gb) never cause a mismatch.
@@ -120,6 +121,13 @@ export default function DiagramPanel({ isMobile = false }: DiagramPanelProps) {
   const roleColour = selectedChord
     ? (ROLE_COLOURS[selectedChord.keyContext] ?? 'var(--accent)')
     : 'var(--accent)'
+
+  // Note pills from active voicing fret positions
+  const notePills: string[] = voicing
+    ? voicing.frets
+        .map((f, i) => f >= 0 ? noteAtPosition(i, f === 0 ? 0 : f + voicing.baseFret - 1) : null)
+        .filter((n): n is string => n !== null)
+    : []
 
   // ── Shared inner content ──────────────────────────────────────────────────
   const content = (
@@ -322,6 +330,48 @@ export default function DiagramPanel({ isMobile = false }: DiagramPanelProps) {
           >
             <div ref={diagramRef} />
           </div>
+
+          {/* Note pills */}
+          {notePills.length > 0 && (
+            <div
+              style={{
+                display: 'flex',
+                gap: 4,
+                padding: isMobile ? '4px 14px 0' : '4px 12px 0',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                flexShrink: 0,
+              }}
+            >
+              <span
+                style={{
+                  fontSize: 9,
+                  color: 'var(--color-text-tertiary)',
+                  letterSpacing: 1,
+                  textTransform: 'uppercase',
+                  fontFamily: 'var(--font-body)',
+                }}
+              >
+                Notes
+              </span>
+              {notePills.map((n, i) => (
+                <span
+                  key={i}
+                  style={{
+                    background: 'var(--pill-bg)',
+                    border: '1px solid var(--pill-border)',
+                    borderRadius: 20,
+                    padding: '1px 7px',
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: 10,
+                    color: 'var(--color-text-primary)',
+                  }}
+                >
+                  {n}
+                </span>
+              ))}
+            </div>
+          )}
 
           {/* Dot indicators */}
           {voicings.length > 1 && (
